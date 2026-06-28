@@ -1,0 +1,2877 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-Paper Tag Controller</title>
+  <style>
+    @font-face {
+      font-family: "EPD Orbitron Bold";
+      src: url("../Font/Orbitron/static/Orbitron-Bold.ttf") format("truetype");
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "EPD Archivo Black";
+      src: url("../Font/Archivo_Black/ArchivoBlack-Regular.ttf") format("truetype");
+      font-weight: 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "EPD Russo One";
+      src: url("../Font/Russo_One/RussoOne-Regular.ttf") format("truetype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      color-scheme: light;
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --line: #d9dee7;
+      --text: #17202a;
+      --muted: #687385;
+      --accent: #0f766e;
+      --accent-strong: #0b5f59;
+      --danger: #b42318;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 650;
+    }
+
+    main {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: minmax(300px, 420px) 1fr;
+      gap: 18px;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 650;
+      color: #263241;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .widget-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .layout-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .layout-grid button {
+      min-height: 42px;
+      text-align: left;
+    }
+
+    .orientation-tools {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .orientation-tools button {
+      text-align: center;
+      min-height: 38px;
+    }
+
+    .layout-group-title {
+      margin: 12px 0 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .custom-help {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--muted);
+      background: rgba(148, 163, 184, .08);
+      font-size: 12px;
+    }
+
+    .custom-presets {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .widget-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 8px;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .widget-toggle input {
+      margin: 0;
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 11px;
+      min-height: 36px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: var(--accent-strong);
+    }
+
+    button.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #e8f5f3;
+    }
+
+    input[type="datetime-local"] {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 9px;
+      min-height: 36px;
+      width: 100%;
+    }
+
+    select {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px 9px;
+      min-height: 36px;
+      background: #fff;
+      color: var(--text);
+      width: 100%;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #a7b0bd;
+    }
+
+    .dot.on {
+      background: #16a34a;
+    }
+
+    .dot.err {
+      background: var(--danger);
+    }
+
+    .preview-wrap {
+      display: grid;
+      place-items: center;
+      min-height: 290px;
+    }
+
+    .epd {
+      width: min(100%, 424px);
+      aspect-ratio: 212 / 104;
+      background: #fdfdf8;
+      border: 1px solid #2e2e2e;
+      box-shadow: inset 0 0 0 4px #f2f0e8;
+      display: grid;
+      place-items: center;
+      font-family: "Courier New", monospace;
+      color: #111;
+      overflow: hidden;
+      container-type: inline-size;
+    }
+
+    .epd.landscape {
+      aspect-ratio: 212 / 104;
+    }
+
+    .epd.portrait {
+      width: min(100%, 312px);
+      aspect-ratio: 104 / 212;
+    }
+
+    .screen {
+      width: 92%;
+      height: 82%;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .epd.rotated .screen {
+      transform: rotate(180deg);
+      transform-origin: center;
+    }
+
+    .screen .big {
+      font-size: clamp(30px, 7vw, 58px);
+      line-height: 0.95;
+      font-weight: 700;
+    }
+
+    .screen .mid {
+      font-size: clamp(18px, 3.5vw, 32px);
+      font-weight: 700;
+    }
+
+    .screen .small {
+      font-size: clamp(14px, 2.4vw, 22px);
+      font-weight: 700;
+    }
+
+    .screen.font-bold .big,
+    .screen.font-bold .calendar-side .day,
+    .screen.font-bold .calendar-side .time {
+      font-family: "EPD Orbitron Bold", Impact, "Arial Black", monospace;
+      font-weight: 700;
+    }
+
+    .screen.font-digital .big,
+    .screen.font-digital .calendar-side .day,
+    .screen.font-digital .calendar-side .time {
+      font-family: "Arial Black", Impact, monospace;
+      font-weight: 900;
+    }
+
+    .screen.font-lcd .big,
+    .screen.font-lcd .calendar-side .day,
+    .screen.font-lcd .calendar-side .time {
+      font-family: "Arial Black", Impact, monospace;
+      font-weight: 900;
+    }
+
+    .screen.font-archivo .big,
+    .screen.font-archivo .calendar-side .day,
+    .screen.font-archivo .calendar-side .time {
+      font-family: "EPD Archivo Black", Impact, "Arial Black", monospace;
+    }
+
+    .screen.font-russo .big,
+    .screen.font-russo .calendar-side .day,
+    .screen.font-russo .calendar-side .time {
+      font-family: "EPD Russo One", Impact, "Arial Black", monospace;
+      font-weight: 400;
+    }
+
+    .screen.calendar-mode {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .screen.custom-mode {
+      width: 100%;
+      height: 100%;
+      display: block;
+      position: relative;
+    }
+
+    .screen.preset-mode {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .custom-preview-widget {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      outline: 1px dashed #96a0af;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      white-space: nowrap;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .custom-preview-widget:active {
+      cursor: grabbing;
+    }
+
+    .custom-preview-widget.time {
+      font-size: var(--widget-font);
+    }
+
+    .custom-preview-widget.info {
+      font-size: var(--widget-font);
+    }
+
+    .custom-preview-calendar {
+      position: absolute;
+      width: 52.83%;
+      height: 33.02cqw;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      outline: 1px dashed #96a0af;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .custom-preview-calendar:active {
+      cursor: grabbing;
+    }
+
+    .custom-calendar-head,
+    .custom-calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      align-items: center;
+    }
+
+    .custom-calendar-head {
+      font-size: 3.3cqw;
+      background: #111;
+      color: #fff;
+    }
+
+    .custom-calendar-days {
+      grid-template-rows: repeat(6, 1fr);
+      font-size: 3.3cqw;
+    }
+
+    .custom-calendar-days span {
+      display: grid;
+      place-items: center;
+    }
+
+    .custom-calendar-days .today {
+      background: #111;
+      color: #fff;
+      margin: 1px;
+    }
+
+    .epd.portrait .custom-preview-calendar {
+      width: 94%;
+      height: 38%;
+    }
+
+    .epd.portrait .custom-preview-widget.time {
+      font-size: calc(var(--widget-font) * .82);
+    }
+
+    .custom-divider {
+      position: absolute;
+      background: #111;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .custom-divider:active {
+      cursor: grabbing;
+    }
+
+    .custom-divider.horizontal {
+      width: 100%;
+      height: 0.47cqw;
+    }
+
+    .custom-divider.vertical {
+      width: 0.47cqw;
+      height: 100%;
+    }
+
+    .calendar-preview {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 58% 42%;
+      grid-template-rows: 18% 68% 14%;
+      border: 1px solid #111;
+      box-sizing: border-box;
+      font-weight: 700;
+    }
+
+    .calendar-weekdays,
+    .calendar-days {
+      grid-column: 1;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      align-items: center;
+      text-align: center;
+    }
+
+    .calendar-weekdays {
+      grid-row: 1;
+      border-bottom: 1px solid #111;
+      font-size: clamp(7px, 1.3vw, 13px);
+      background: #111;
+      color: #fff;
+    }
+
+    .calendar-days {
+      grid-row: 2;
+      grid-template-rows: repeat(6, 1fr);
+      align-items: stretch;
+      padding: 4px 3px;
+      box-sizing: border-box;
+      font-size: clamp(8px, 1.5vw, 15px);
+    }
+
+    .calendar-days span {
+      display: grid;
+      place-items: center;
+    }
+
+    .calendar-days .today {
+      background: #111;
+      color: #fff;
+      margin: 1px;
+    }
+
+    .calendar-month-note {
+      grid-column: 1;
+      grid-row: 3;
+      border-top: 1px solid #111;
+      display: grid;
+      place-items: center;
+      font-size: clamp(8px, 1.5vw, 15px);
+    }
+
+    .calendar-side {
+      grid-column: 2;
+      grid-row: 1 / 4;
+      border-left: 1px solid #111;
+      display: grid;
+      grid-template-rows: 18% 40% 29% 13%;
+      text-align: center;
+    }
+
+    .calendar-side > div {
+      display: grid;
+      place-items: center;
+      box-sizing: border-box;
+    }
+
+    .calendar-side .month {
+      border-bottom: 1px solid #111;
+      font-size: clamp(9px, 1.7vw, 17px);
+    }
+
+    .calendar-side .day-row {
+      grid-template-columns: 60% 40%;
+      border-bottom: 1px solid #111;
+    }
+
+    .calendar-side .day {
+      font-size: clamp(24px, 5vw, 47px);
+      line-height: 1;
+    }
+
+    .calendar-side .weekday {
+      border-left: 1px solid #111;
+      font-size: clamp(12px, 2.2vw, 21px);
+    }
+
+    .calendar-side .time {
+      border-bottom: 1px solid #111;
+      font-size: clamp(20px, 4.2vw, 40px);
+      line-height: 1;
+    }
+
+    .calendar-side .metrics {
+      font-size: clamp(8px, 1.5vw, 15px);
+    }
+
+    .preset-preview {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #111;
+      font-weight: 700;
+    }
+
+    .preset-header {
+      height: 16%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3%;
+      border-bottom: 1px solid #111;
+      font-size: 3.2cqw;
+      white-space: nowrap;
+    }
+
+    .preset-time {
+      height: 64%;
+      display: grid;
+      place-items: center;
+      font-size: 20cqw;
+      line-height: .8;
+      letter-spacing: 0;
+    }
+
+    .preset-footer {
+      height: 20%;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      border-top: 1px solid #111;
+      font-size: 4cqw;
+    }
+
+    .preset-calendar {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 55% 45%;
+      border: 1px solid #111;
+    }
+
+    .preset-calendar .calendar-mini {
+      min-width: 0;
+      border-right: 1px solid #111;
+      display: grid;
+      grid-template-rows: 14% 72% 14%;
+      font-size: 3cqw;
+    }
+
+    .preset-calendar .calendar-mini .head,
+    .preset-calendar .calendar-mini .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      align-items: center;
+      text-align: center;
+    }
+
+    .preset-calendar .calendar-mini .head {
+      background: #111;
+      color: #fff;
+    }
+
+    .preset-calendar .calendar-mini .days {
+      grid-template-rows: repeat(6, 1fr);
+    }
+
+    .preset-calendar .calendar-mini .days span {
+      display: grid;
+      place-items: center;
+    }
+
+    .preset-calendar .calendar-mini .footer {
+      border-top: 1px solid #111;
+      display: grid;
+      place-items: center;
+    }
+
+    .preset-calendar .right {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: 18% 31% 34% 17%;
+      text-align: center;
+    }
+
+    .preset-calendar .right > div {
+      display: grid;
+      place-items: center;
+      border-bottom: 1px solid #111;
+    }
+
+    .preset-calendar .right > div:last-child { border-bottom: 0; }
+    .preset-calendar .large-day { font-size: 15cqw; line-height: .8; }
+    .preset-calendar .large-time { font-size: 10cqw; line-height: .8; }
+    .preset-calendar .analog { font-size: 17cqw; line-height: .8; }
+    .preset-calendar .metric { font-size: 3.2cqw; }
+
+    .preset-calendar.calendar-day .right { grid-template-rows: 18% 37% 27% 18%; }
+    .preset-calendar.calendar-time .right { grid-template-rows: 18% 46% 22% 14%; }
+    .preset-calendar.calendar-split .right { grid-template-rows: 18% 28% 34% 20%; }
+    .preset-calendar.calendar-analog .right { grid-template-rows: 18% 64% 18%; }
+
+    .preset-calendar .split-row {
+      grid-template-columns: 48% 52%;
+      font-size: 4cqw;
+    }
+
+    .preset-calendar .split-row .large-day {
+      border-left: 1px solid #111;
+      display: grid;
+      place-items: center;
+    }
+
+    .preset-calendar .analog-face {
+      width: 62%;
+      aspect-ratio: 1;
+      border: 1px solid #111;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 4.3cqw;
+    }
+
+    .preset-calendar .time-battery {
+      display: grid;
+      grid-template-columns: 60% 40%;
+      font-size: 5.6cqw;
+    }
+
+    .preset-calendar .time-battery span:last-child {
+      font-size: 3.2cqw;
+    }
+
+    .full-month-preview {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-rows: 16% 84%;
+      border: 1px solid #111;
+      font-size: 4.1cqw;
+      font-weight: 700;
+    }
+
+    .full-month-preview .head,
+    .full-month-preview .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      align-items: center;
+      text-align: center;
+    }
+
+    .full-month-preview .head { background: #111; color: #fff; }
+    .full-month-preview .days { grid-template-rows: repeat(6, 1fr); }
+    .full-month-preview .days span { display: grid; place-items: center; }
+    .full-month-preview .days .today { background: #111; color: #fff; margin: 2px; }
+
+    .image-controls {
+      display: grid;
+      gap: 10px;
+    }
+
+    .image-controls input[type="file"] {
+      width: 100%;
+      font: inherit;
+    }
+
+    .range-field {
+      display: grid;
+      grid-template-columns: 54px 1fr 42px;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .range-field input { width: 100%; }
+    .range-field output { text-align: right; color: var(--text); }
+
+    .upload-progress {
+      display: grid;
+      grid-template-columns: 1fr 48px;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    progress { width: 100%; height: 10px; }
+
+    .screen.image-mode,
+    .screen.canvas-mode {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .image-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      image-rendering: pixelated;
+    }
+
+    pre {
+      margin: 0;
+      min-height: 190px;
+      max-height: 280px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #0f172a;
+      color: #dbeafe;
+      padding: 10px;
+      font-size: 12px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .app-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .sync-panel {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 10px;
+    }
+
+    .version-pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .ota-section {
+      grid-column: 1 / -1;
+    }
+
+    .ota-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 420px);
+      gap: 16px;
+      align-items: end;
+    }
+
+    .update-note {
+      border-left: 3px solid var(--accent);
+      padding-left: 12px;
+      color: var(--muted);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(0, 0, 0, .58);
+      z-index: 20;
+      padding: 18px;
+    }
+
+    .modal-backdrop.open {
+      display: grid;
+    }
+
+    .modal {
+      width: min(100%, 420px);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 18px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .42);
+    }
+
+    .modal h2 {
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .modal p {
+      margin: 0 0 14px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 820px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .ota-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 14% -8%, rgba(20, 184, 166, .16), transparent 30%),
+        linear-gradient(180deg, #101826 0%, #0b1120 48%, #070b13 100%);
+      color: #e5edf7;
+    }
+
+    :root {
+      color-scheme: dark;
+      --bg: #080d18;
+      --panel: #111827;
+      --panel-2: #0d1424;
+      --line: #273449;
+      --text: #e5edf7;
+      --muted: #94a3b8;
+      --accent: #14b8a6;
+      --accent-strong: #0f9f92;
+      --danger: #fb7185;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(9, 14, 25, .88);
+      backdrop-filter: blur(12px);
+      border-bottom-color: #223047;
+      padding: 16px 22px;
+    }
+
+    h1 {
+      font-size: 20px;
+      letter-spacing: .2px;
+    }
+
+    main {
+      max-width: 1280px;
+      grid-template-columns: minmax(320px, 440px) minmax(520px, 1fr);
+      align-items: start;
+    }
+
+    section {
+      background: linear-gradient(180deg, rgba(17, 24, 39, .96), rgba(13, 20, 36, .96));
+      border-color: var(--line);
+      box-shadow: 0 14px 42px rgba(0, 0, 0, .2);
+    }
+
+    h2 {
+      color: #f8fafc;
+      letter-spacing: .1px;
+    }
+
+    button {
+      background: #172033;
+      border-color: #334158;
+      color: var(--text);
+    }
+
+    button:hover {
+      border-color: #4b5f7c;
+      background: #1b263a;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #031411;
+      font-weight: 700;
+    }
+
+    button.active {
+      color: #ccfbf1;
+      border-color: var(--accent);
+      background: rgba(20, 184, 166, .14);
+      box-shadow: inset 0 0 0 1px rgba(20, 184, 166, .22);
+    }
+
+    input[type="datetime-local"],
+    select,
+    input[type="file"] {
+      background: #0d1424;
+      border-color: #344258;
+      color: var(--text);
+    }
+
+    .widget-toggle {
+      background: #0d1424;
+      border-color: #344258;
+    }
+
+    .preview-wrap {
+      min-height: 360px;
+      background: #0a1020;
+      border: 1px solid #1f2c44;
+      border-radius: 8px;
+    }
+
+    .epd {
+      width: min(100%, 636px);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, .35), inset 0 0 0 4px #ebe9de;
+    }
+
+    .epd.portrait {
+      width: min(100%, 344px);
+    }
+
+    pre {
+      min-height: 240px;
+      max-height: 360px;
+      background: #050a14;
+      border-color: #1f2c44;
+      color: #dbeafe;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>E-Paper Tag Studio</h1>
+    <div class="app-actions">
+      <span class="version-pill">Web: <span id="webVersionLabel">EPD Web v0.3.7</span></span>
+      <span class="version-pill">FW: <span id="fwVersionLabel">chưa kết nối</span></span>
+      <span class="status"><span id="statusDot" class="dot"></span><span id="statusText">Not connected</span></span>
+    </div>
+  </header>
+
+  <main>
+    <div class="stack">
+      <section>
+        <h2>Kết nối BLE</h2>
+        <div class="row">
+          <button id="connectBtn" class="primary">Scan</button>
+          <button id="reconnectBtn">Reconnect</button>
+          <button id="disconnectBtn">Disconnect</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Layout hiển thị</h2>
+        <div class="orientation-tools" id="orientationPicker">
+          <button data-orientation="landscape" class="active">Ngang</button>
+          <button data-orientation="portrait">Dọc</button>
+          <button id="rotatePreviewBtn" type="button">Xoay</button>
+        </div>
+        <div id="layoutPicker">
+          <div class="layout-group-title">Layout</div>
+          <div class="layout-grid">
+            <button data-layout="5">Segment Clock</button>
+            <button data-layout="7">Calendar + Time</button>
+            <button data-layout="9">Calendar + Analog</button>
+            <button data-layout="10" class="active">Calendar Split</button>
+            <button data-layout="11">Full Month</button>
+            <button data-layout="3">Custom</button>
+          </div>
+        </div>
+        <div class="sync-panel">
+          <input id="dateTimeInput" type="hidden">
+          <button id="sendBtn" class="primary">Đồng bộ layout</button>
+        </div>
+      </section>
+
+      <section id="customPanel" hidden>
+        <h2>Tùy biến widget</h2>
+        <div class="stack">
+          <div class="custom-help">Chon widget, bam preset nhanh, sau do keo truc tiep tren preview. Duong ngang/doc va calendar co the keo bang chuot.</div>
+          <div class="custom-presets" id="customPresets">
+            <button type="button" data-preset="status">Status bar</button>
+            <button type="button" data-preset="clock">Clock focus</button>
+            <button type="button" data-preset="calendar">Calendar split</button>
+            <button type="button" data-preset="portrait">Doc thong tin</button>
+          </div>
+          <div class="widget-grid" id="widgetToggles">
+            <label class="widget-toggle"><input type="checkbox" data-widget="time" checked>Time</label>
+            <label class="widget-toggle"><input type="checkbox" data-widget="date" checked>Date</label>
+            <label class="widget-toggle"><input type="checkbox" data-widget="weekday" checked>Weekday</label>
+            <label class="widget-toggle"><input type="checkbox" data-widget="temp" checked>Nhiệt độ</label>
+            <label class="widget-toggle"><input type="checkbox" data-widget="battery" checked>Pin</label>
+            <label class="widget-toggle"><input type="checkbox" data-widget="border" checked>Border</label>
+          </div>
+          <div class="widget-grid" id="extensionToggles">
+            <label class="widget-toggle"><input type="checkbox" data-extension="calendar">Calendar</label>
+            <label class="widget-toggle"><input type="checkbox" data-extension="horizontal">Đường ngang</label>
+            <label class="widget-toggle"><input type="checkbox" data-extension="vertical">Đường dọc</label>
+          </div>
+          <div class="row">
+            <label class="field">Time size
+              <select id="customTimeScale">
+                <option value="0">Small</option>
+                <option value="1" selected>Medium</option>
+                <option value="2">Large</option>
+                <option value="3">Extra large</option>
+              </select>
+            </label>
+            <label class="field">Info size
+              <select id="customInfoScale">
+                <option value="0" selected>Compact</option>
+                <option value="1">Large</option>
+              </select>
+            </label>
+            <label class="field">Calendar style
+              <select id="calendarStyle">
+                <option value="0" selected>Month grid</option>
+                <option value="1">Compact grid</option>
+              </select>
+            </label>
+          </div>
+          <button id="applyCustomBtn" class="primary">Áp dụng thiết kế</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Font số</h2>
+        <select id="fontSelect" aria-label="Number font">
+          <option value="0">Classic</option>
+          <option value="1">Orbitron Bold</option>
+          <option value="2">Digital</option>
+          <option value="3">LCD</option>
+          <option value="5">Archivo Black</option>
+          <option value="6">Russo One</option>
+        </select>
+      </section>
+
+      <section>
+        <h2>Ảnh hiển thị</h2>
+        <div class="image-controls">
+          <input id="imageInput" type="file" accept="image/*">
+          <label class="field">Fit mode
+            <select id="imageFitMode">
+              <option value="contain">Fit - keep full image</option>
+              <option value="cover">Fill - crop image</option>
+            </select>
+          </label>
+          <label class="range-field">Zoom
+            <input id="imageZoom" type="range" min="50" max="200" value="100">
+            <output id="imageZoomValue">100%</output>
+          </label>
+          <label class="range-field">X
+            <input id="imageOffsetX" type="range" min="-100" max="100" value="0">
+            <output id="imageOffsetXValue">0</output>
+          </label>
+          <label class="range-field">Y
+            <input id="imageOffsetY" type="range" min="-100" max="100" value="0">
+            <output id="imageOffsetYValue">0</output>
+          </label>
+          <div class="row">
+            <button id="previewImageBtn">Xem thử ảnh</button>
+            <button id="uploadImageBtn" class="primary">Gửi lên màn</button>
+          </div>
+          <div class="upload-progress">
+            <progress id="imageProgress" max="100" value="0"></progress>
+            <span id="imageProgressValue">0%</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="stack">
+      <section>
+        <h2 id="previewTitle">Preview 212 x 104</h2>
+        <div class="preview-wrap">
+          <div id="epdFrame" class="epd landscape">
+            <div id="preview" class="screen"></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Log</h2>
+        <pre id="log"></pre>
+      </section>
+    </div>
+
+    <section class="ota-section">
+      <h2>Cập nhật phiên bản mới</h2>
+      <div class="ota-grid">
+        <div class="update-note">
+          Web sẽ kiểm tra bản cập nhật trên GitHub. Khi có phiên bản mới, nhấn cập nhật để tải firmware mới và OTA xuống thiết bị qua BLE.
+          Nếu cập nhật bị ngắt giữa chừng, FW cũ vẫn còn hiệu lực cho đến khi commit thành công.
+          <div id="fwUpdateStatus" class="update-status">Chưa kiểm tra bản cập nhật.</div>
+        </div>
+        <div class="stack">
+          <button id="checkFwUpdateBtn">Kiểm tra cập nhật</button>
+          <button id="flashWriteBtn" class="primary">Cập nhật từ GitHub</button>
+          <div class="upload-progress">
+            <progress id="flashWriteProgress" max="100" value="0"></progress>
+            <span id="flashWriteProgressValue">0%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="fwUpdateModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="fwUpdateTitle">
+    <div class="modal">
+      <h2 id="fwUpdateTitle">Cần cập nhật FW mới</h2>
+      <p id="fwUpdateMessage">FW hiện tại cũ hơn phiên bản web, một số tính năng mới sẽ không dùng được.</p>
+      <div class="row">
+        <button id="fwUpdateCloseBtn" class="primary">Đã hiểu</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SERVICE_UUID = '18424398-7cbc-11e9-8f9e-2a86e4085a59';
+    const CONTROL_UUID = '2d86686a-53dc-25b3-0c4a-f0e10c8dee20';
+    const FLASH_DUMP_UUID = '2f86686a-53dc-25b3-0c4a-f0e10c8dee20';
+    const WEB_VERSION = '0.3.8';
+    const FW_PROTOCOL_VERSION = 'EPD FW protocol v0.3.1';
+    const UPDATE_MANIFEST_URL = 'https://k-minh99.github.io/ePaper/firmware/manifest.json';
+    const SLOT_IMAGE_MAX_BYTES = 0x12000;
+    const DEVICE_NAME = 'DLG-PRPH';
+    const SYNC_LEAD_SECONDS = 2;
+
+    let device = null;
+    let characteristic = null;
+    let flashDumpCharacteristic = null;
+    let flashWriteActive = false;
+    let safeOtaSupported = false;
+    let firmwareCompatible = false;
+    let latestFirmwareManifest = null;
+    let manualDisconnect = false;
+    let autoReconnect = true;
+    let reconnecting = false;
+    let selectedLayout = 10;
+    let selectedFont = 0;
+    let selectedOrientation = 'landscape';
+    let previewRotated = false;
+    const custom = {
+      widgets: 0x3f,
+      timePos: 0x52,
+      datePos: 0x37,
+      metricsPos: 0x9a,
+      style: 0x01
+    };
+    const customExtension = {
+      widgets: 0x00,
+      calendarPos: 0x01,
+      calendarStyle: 0x00,
+      lineFlags: 0x00,
+      horizontalY: 8,
+      verticalX: 8
+    };
+    let dragWidget = null;
+    let imageSource = null;
+    let imagePreviewActive = false;
+
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const logEl = document.getElementById('log');
+    const dateTimeInput = document.getElementById('dateTimeInput');
+    const epdFrame = document.getElementById('epdFrame');
+    const preview = document.getElementById('preview');
+    const previewTitle = document.getElementById('previewTitle');
+    const fontSelect = document.getElementById('fontSelect');
+    const customPanel = document.getElementById('customPanel');
+    const timeScaleSelect = document.getElementById('customTimeScale');
+    const infoScaleSelect = document.getElementById('customInfoScale');
+    const calendarStyleSelect = document.getElementById('calendarStyle');
+    const imageInput = document.getElementById('imageInput');
+    const imageFitMode = document.getElementById('imageFitMode');
+    const imageZoom = document.getElementById('imageZoom');
+    const imageOffsetX = document.getElementById('imageOffsetX');
+    const imageOffsetY = document.getElementById('imageOffsetY');
+    const imageZoomValue = document.getElementById('imageZoomValue');
+    const imageOffsetXValue = document.getElementById('imageOffsetXValue');
+    const imageOffsetYValue = document.getElementById('imageOffsetYValue');
+    const imageProgress = document.getElementById('imageProgress');
+    const imageProgressValue = document.getElementById('imageProgressValue');
+    const checkFwUpdateBtn = document.getElementById('checkFwUpdateBtn');
+    const flashWriteBtn = document.getElementById('flashWriteBtn');
+    const flashWriteProgress = document.getElementById('flashWriteProgress');
+    const flashWriteProgressValue = document.getElementById('flashWriteProgressValue');
+    const fwUpdateStatus = document.getElementById('fwUpdateStatus');
+    const webVersionLabel = document.getElementById('webVersionLabel');
+    const fwVersionLabel = document.getElementById('fwVersionLabel');
+    const fwUpdateModal = document.getElementById('fwUpdateModal');
+    const fwUpdateMessage = document.getElementById('fwUpdateMessage');
+    const fwUpdateCloseBtn = document.getElementById('fwUpdateCloseBtn');
+
+    function log(message) {
+      const time = new Date().toLocaleTimeString();
+      logEl.textContent = `[${time}] ${message}\n` + logEl.textContent;
+    }
+
+    function setStatus(kind, text) {
+      statusDot.className = `dot ${kind || ''}`;
+      statusText.textContent = text;
+    }
+
+    function showFirmwareUpdateRequired(featureName = 'tính năng này') {
+      fwUpdateMessage.textContent = `FW hiện tại cũ hơn web nên ${featureName} có thể không chạy đúng. Hãy cập nhật FW mới rồi kết nối lại thiết bị.`;
+      fwUpdateModal.classList.add('open');
+    }
+
+    function requireCompatibleFirmware(featureName) {
+      if (!firmwareCompatible) {
+        showFirmwareUpdateRequired(featureName);
+        return false;
+      }
+      return true;
+    }
+
+    function setFlashWriteProgress(value) {
+      const safeValue = Math.max(0, Math.min(100, value));
+      flashWriteProgress.value = safeValue;
+      flashWriteProgressValue.textContent = `${safeValue}%`;
+    }
+
+    async function writeControl(packet) {
+      if (characteristic.writeValueWithResponse) {
+        await characteristic.writeValueWithResponse(packet);
+      } else {
+        await characteristic.writeValue(packet);
+      }
+    }
+
+    async function writeControlFast(packet) {
+      if (characteristic.writeValueWithoutResponse) {
+        await characteristic.writeValueWithoutResponse(packet);
+      } else {
+        await writeControl(packet);
+      }
+    }
+
+    function flashWritePacket(cmd, address, payload = new Uint8Array()) {
+      if (payload.length > 11) throw new Error('Internal chunk too large.');
+      const packet = new Uint8Array(9 + payload.length);
+      packet[0] = 0x45;
+      packet[1] = 0x50;
+      packet[2] = 0x44;
+      packet[3] = 0x38;
+      packet[4] = cmd;
+      packet[5] = address & 0xff;
+      packet[6] = (address >> 8) & 0xff;
+      packet[7] = (address >> 16) & 0xff;
+      packet[8] = payload.length;
+      packet.set(payload, 9);
+      return packet;
+    }
+
+    function isSlotImage(image) {
+      return image.length >= 64 && image[0] === 0x70 && image[1] === 0x51;
+    }
+
+    function compareVersions(left, right) {
+      const normalize = value => String(value || '0').replace(/^v/i, '').split('.').map(part => Number.parseInt(part, 10) || 0);
+      const a = normalize(left);
+      const b = normalize(right);
+      const count = Math.max(a.length, b.length);
+      for (let index = 0; index < count; index += 1) {
+        const delta = (a[index] || 0) - (b[index] || 0);
+        if (delta !== 0) return delta;
+      }
+      return 0;
+    }
+
+    function updateFirmwareStatus(text) {
+      if (fwUpdateStatus) fwUpdateStatus.textContent = text;
+    }
+
+    function resolveManifestUrl(path) {
+      return new URL(path, UPDATE_MANIFEST_URL).toString();
+    }
+
+    async function sha256Hex(data) {
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return [...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+    }
+
+    async function fetchFirmwareManifest() {
+      updateFirmwareStatus('Đang kiểm tra bản cập nhật...');
+      const response = await fetch(`${UPDATE_MANIFEST_URL}?t=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Không tải được manifest cập nhật (${response.status}).`);
+      }
+      latestFirmwareManifest = await response.json();
+      const latest = latestFirmwareManifest.version || 'unknown';
+      const protocol = latestFirmwareManifest.protocol || latestFirmwareManifest.fwProtocol || FW_PROTOCOL_VERSION;
+      const notes = latestFirmwareManifest.notes ? ` ${latestFirmwareManifest.notes}` : '';
+      const isNewerThanWeb = compareVersions(latest, WEB_VERSION) > 0;
+      const protocolMatches = protocol === FW_PROTOCOL_VERSION;
+      updateFirmwareStatus(`${isNewerThanWeb ? 'Có' : 'Đang dùng'} bản mới nhất trên GitHub: v${latest}.${protocolMatches ? '' : ' Cần web/FW protocol phù hợp.'}${notes}`);
+      log(`GitHub firmware manifest: v${latest}, protocol ${protocol}`);
+      return latestFirmwareManifest;
+    }
+
+    async function fetchLatestFirmwareImage() {
+      const manifest = latestFirmwareManifest || await fetchFirmwareManifest();
+      const imageInfo = manifest.image || {};
+      const imagePath = imageInfo.url || manifest.imageUrl;
+      if (!imagePath) {
+        throw new Error('Manifest không có đường dẫn firmware image.');
+      }
+      const imageUrl = resolveManifestUrl(imagePath);
+      updateFirmwareStatus(`Đang tải firmware v${manifest.version || ''} từ GitHub...`);
+      const response = await fetch(`${imageUrl}?t=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Không tải được firmware image (${response.status}).`);
+      }
+      const buffer = await response.arrayBuffer();
+      if (imageInfo.size && buffer.byteLength !== imageInfo.size) {
+        throw new Error(`Sai kích thước image: ${buffer.byteLength}, mong đợi ${imageInfo.size}.`);
+      }
+      if (imageInfo.sha256) {
+        const actual = await sha256Hex(buffer);
+        if (actual !== String(imageInfo.sha256).toUpperCase()) {
+          throw new Error(`Sai SHA256 image. Got ${actual}.`);
+        }
+      }
+      return new Uint8Array(buffer);
+    }
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function programOtaSlotImage(image) {
+      const sectorCount = Math.ceil(image.length / 4096);
+      log(`Safe OTA started: ${image.length} bytes, ${sectorCount} sectors. The old firmware remains valid until commit.`);
+
+      await writeControl(new Uint8Array([0x45, 0x50, 0x44, 0x38, 0x00, image.length & 0xff, (image.length >> 8) & 0xff, (image.length >> 16) & 0xff, 0x00]));
+      for (let sector = 0; sector < sectorCount; sector += 1) {
+        await writeControl(flashWritePacket(0x01, sector * 4096));
+        await delay(35);
+        setFlashWriteProgress(Math.floor((sector * 20) / sectorCount));
+      }
+
+      let offset = 0;
+      let chunkCount = 0;
+      while (offset < image.length) {
+        const pageRemaining = 256 - (offset & 0xff);
+        const length = Math.min(11, pageRemaining, image.length - offset);
+        await writeControl(flashWritePacket(0x02, offset, image.slice(offset, offset + length)));
+        offset += length;
+        chunkCount += 1;
+        if ((offset % 2048) === 0 || offset === image.length) {
+          setFlashWriteProgress(20 + Math.floor((offset * 75) / image.length));
+          await delay(1);
+        } else if ((chunkCount % 64) === 0) {
+          await delay(1);
+        }
+      }
+
+      await writeControl(new Uint8Array([0x45, 0x50, 0x44, 0x38, 0x03, 0x00, 0x00, 0x00, 0x00]));
+      setFlashWriteProgress(100);
+      log('Safe OTA commit complete. Power-cycle/reset the board, then scan BLE. If OTA was interrupted before this line, the old firmware remains active.');
+    }
+
+    async function programExternalFlash() {
+      if (!characteristic || !device || !device.gatt.connected) {
+        throw new Error('Scan and connect the BLE tag before programming flash.');
+      }
+      if (!safeOtaSupported) {
+        showFirmwareUpdateRequired('cập nhật OTA');
+        throw new Error('Connected firmware is the legacy flash-writer build. Safe OTA is disabled here. First flash the latest compact bundle with flash_writer_legacy.html, power-cycle, then reconnect to this page.');
+      }
+
+      const image = await fetchLatestFirmwareImage();
+      if (isSlotImage(image) && image.length > SLOT_IMAGE_MAX_BYTES) {
+        throw new Error('Slot image is too large for the current two-slot flash map.');
+      }
+      if (!isSlotImage(image)) {
+        throw new Error('Unsupported firmware image from GitHub. Use epd_tag_slot_a.img or epd_tag_slot_b.img format.');
+      }
+
+      flashWriteActive = true;
+      autoReconnect = false;
+      flashWriteBtn.disabled = true;
+      setFlashWriteProgress(0);
+
+      try {
+        await programOtaSlotImage(image);
+        updateFirmwareStatus('Cập nhật OTA đã commit xong. Reset thiết bị rồi kết nối lại.');
+      } finally {
+        flashWriteActive = false;
+        autoReconnect = true;
+        flashWriteBtn.disabled = false;
+      }
+    }
+
+    function toLocalInputValue(date) {
+      const pad = value => String(value).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+
+    function dateFromInput() {
+      if (!dateTimeInput.value) {
+        return new Date();
+      }
+      return new Date(dateTimeInput.value);
+    }
+
+    function weekdayForFirmware(date) {
+      const day = date.getDay();
+      return day === 0 ? 7 : day;
+    }
+
+    function jdFromDate(day, month, year) {
+      const a = Math.floor((14 - month) / 12);
+      const y = year + 4800 - a;
+      const m = month + 12 * a - 3;
+      let jd = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+      if (jd < 2299161) jd = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - 32083;
+      return jd;
+    }
+
+    function newMoonDay(k, timeZone) {
+      const time = k / 1236.85;
+      const time2 = time * time;
+      const time3 = time2 * time;
+      const degree = Math.PI / 180;
+      const jd1 = 2415020.75933 + 29.53058868 * k + 0.0001178 * time2 - 0.000000155 * time3;
+      const meanAnomaly = 359.2242 + 29.10535608 * k - 0.0000333 * time2 - 0.00000347 * time3;
+      const moonAnomaly = 306.0253 + 385.81691806 * k + 0.0107306 * time2 + 0.00001236 * time3;
+      const argument = 21.2964 + 390.67050646 * k - 0.0016528 * time2 - 0.00000239 * time3;
+      const correction = (0.1734 - 0.000393 * time) * Math.sin(meanAnomaly * degree) + 0.0021 * Math.sin(2 * meanAnomaly * degree) - 0.4068 * Math.sin(moonAnomaly * degree) + 0.0161 * Math.sin(2 * moonAnomaly * degree) - 0.0004 * Math.sin(3 * moonAnomaly * degree) + 0.0104 * Math.sin(2 * argument * degree) - 0.0051 * Math.sin((meanAnomaly + moonAnomaly) * degree) - 0.0074 * Math.sin((meanAnomaly - moonAnomaly) * degree) + 0.0004 * Math.sin((2 * argument + meanAnomaly) * degree) - 0.0004 * Math.sin((2 * argument - meanAnomaly) * degree) - 0.0006 * Math.sin((2 * argument + moonAnomaly) * degree) + 0.001 * Math.sin((2 * argument - moonAnomaly) * degree) + 0.0005 * Math.sin((2 * moonAnomaly + meanAnomaly) * degree);
+      const delta = time < -11 ? 0.001 + 0.000839 * time + 0.0002261 * time2 - 0.00000845 * time3 - 0.000000081 * time * time3 : -0.000278 + 0.000265 * time + 0.000262 * time2;
+      return Math.floor(jd1 + correction - delta + 0.5 + timeZone / 24);
+    }
+
+    function sunLongitude(jdn, timeZone) {
+      const time = (jdn - 2451545.5 - timeZone / 24) / 36525;
+      const time2 = time * time;
+      const degree = Math.PI / 180;
+      const meanAnomaly = 357.5291 + 35999.0503 * time - 0.0001559 * time2 - 0.00000048 * time * time2;
+      const longitude = 280.46645 + 36000.76983 * time + 0.0003032 * time2 + (1.9146 - 0.004817 * time - 0.000014 * time2) * Math.sin(degree * meanAnomaly) + (0.019993 - 0.000101 * time) * Math.sin(2 * degree * meanAnomaly) + 0.00029 * Math.sin(3 * degree * meanAnomaly);
+      return Math.floor((((longitude * degree) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI) / Math.PI * 6);
+    }
+
+    function lunarMonth11(year, timeZone) {
+      const off = jdFromDate(31, 12, year) - 2415021;
+      const k = Math.floor(off / 29.530588853);
+      let nm = newMoonDay(k, timeZone);
+      if (sunLongitude(nm, timeZone) >= 9) nm = newMoonDay(k - 1, timeZone);
+      return nm;
+    }
+
+    function leapMonthOffset(month11, timeZone) {
+      const k = Math.floor(0.5 + (month11 - 2415021) / 29.530588853);
+      let last = 0;
+      let index = 1;
+      let arc = sunLongitude(newMoonDay(k + index, timeZone), timeZone);
+      do {
+        last = arc;
+        index++;
+        arc = sunLongitude(newMoonDay(k + index, timeZone), timeZone);
+      } while (arc !== last && index < 15);
+      return index - 1;
+    }
+
+    function solarToVietnameseLunar(date) {
+      const day = date.getDate();
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+      const timeZone = 7;
+      const dayNumber = jdFromDate(day, month, year);
+      const k = Math.floor((dayNumber - 2415021.076998695) / 29.530588853);
+      let monthStart = newMoonDay(k + 1, timeZone);
+      if (monthStart > dayNumber) monthStart = newMoonDay(k, timeZone);
+      let a11 = lunarMonth11(year, timeZone);
+      let b11 = a11;
+      let lunarYear;
+      if (a11 >= monthStart) {
+        lunarYear = year;
+        a11 = lunarMonth11(year - 1, timeZone);
+      } else {
+        lunarYear = year + 1;
+        b11 = lunarMonth11(year + 1, timeZone);
+      }
+      const lunarDay = dayNumber - monthStart + 1;
+      let diff = Math.floor((monthStart - a11) / 29);
+      let lunarMonth = diff + 11;
+      let leap = false;
+      if (b11 - a11 > 365) {
+        const leapDiff = leapMonthOffset(a11, timeZone);
+        if (diff >= leapDiff) {
+          lunarMonth = diff + 10;
+          if (diff === leapDiff) leap = true;
+        }
+      }
+      if (lunarMonth > 12) lunarMonth -= 12;
+      if (lunarMonth >= 11 && diff < 4) lunarYear--;
+      return { day: lunarDay, month: lunarMonth, year: lunarYear, leap };
+    }
+
+    function buildConfigPacket(layout, date) {
+      const packet = new Uint8Array(20);
+      packet[0] = 0x45;
+      packet[1] = 0x50;
+      packet[2] = 0x44;
+      packet[3] = 0x31;
+      packet[4] = 0x01;
+      packet[5] = layout & 0xff;
+      packet[6] = (selectedFont & 0x07) |
+        (selectedOrientation === 'portrait' ? 0x80 : 0x00) |
+        (previewRotated ? 0x40 : 0x00);
+      packet[7] = weekdayForFirmware(date);
+      packet[8] = Math.max(0, Math.min(99, date.getFullYear() - 2000));
+      packet[9] = date.getMonth() + 1;
+      packet[10] = date.getDate();
+      packet[11] = date.getHours();
+      packet[12] = date.getMinutes();
+      packet[13] = date.getSeconds();
+      if (layout === 3) {
+        packet[14] = custom.widgets;
+        packet[15] = custom.timePos;
+        packet[16] = custom.datePos;
+        packet[17] = custom.metricsPos;
+        packet[18] = custom.style;
+      }
+      packet[19] = packet.slice(0, 19).reduce((sum, value) => (sum + value) & 0xff, 0);
+      return packet;
+    }
+
+    function buildLunarPacket(date) {
+      const lunar = solarToVietnameseLunar(date);
+      const packet = new Uint8Array(20);
+      packet[0] = 0x45;
+      packet[1] = 0x50;
+      packet[2] = 0x44;
+      packet[3] = 0x35;
+      packet[4] = 0x05;
+      packet[5] = lunar.day;
+      packet[6] = lunar.month;
+      packet[7] = lunar.leap ? 1 : 0;
+      packet[19] = packet.slice(0, 19).reduce((sum, value) => (sum + value) & 0xff, 0);
+      return { packet, lunar };
+    }
+
+    function buildTimePacket(date) {
+      const packet = new Uint8Array(20);
+      packet[0] = 0x45;
+      packet[1] = 0x50;
+      packet[2] = 0x44;
+      packet[3] = 0x36;
+      packet[4] = 0x06;
+      packet[5] = weekdayForFirmware(date);
+      packet[6] = Math.max(0, Math.min(99, date.getFullYear() - 2000));
+      packet[7] = date.getMonth() + 1;
+      packet[8] = date.getDate();
+      packet[9] = date.getHours();
+      packet[10] = date.getMinutes();
+      packet[11] = date.getSeconds();
+      packet[19] = packet.slice(0, 19).reduce((sum, value) => (sum + value) & 0xff, 0);
+      return packet;
+    }
+
+    function buildCustomExtensionPacket() {
+      const packet = new Uint8Array(20);
+      packet[0] = 0x45;
+      packet[1] = 0x50;
+      packet[2] = 0x44;
+      packet[3] = 0x32;
+      packet[4] = 0x02;
+      packet[5] = customExtension.widgets;
+      packet[6] = customExtension.calendarPos;
+      packet[7] = customExtension.calendarStyle;
+      packet[8] = customExtension.lineFlags;
+      packet[9] = customExtension.horizontalY;
+      packet[10] = customExtension.verticalX;
+      packet[19] = packet.slice(0, 19).reduce((sum, value) => (sum + value) & 0xff, 0);
+      return packet;
+    }
+
+    function positionX(position) {
+      return ((position >> 4) & 0x0f) * 13;
+    }
+
+    function positionY(position) {
+      return (position & 0x0f) * 6;
+    }
+
+    function positionStyle(position) {
+      const x = (position >> 4) & 0x0f;
+      const y = position & 0x0f;
+      return `left:${(x / 15) * 100}%;top:${(y / 15) * 100}%;`;
+    }
+
+    function logicalFontSize(logicalPixels) {
+      const base = selectedOrientation === 'portrait' ? 104 : 212;
+      return `${((logicalPixels / base) * 100).toFixed(2)}cqw`;
+    }
+
+    function setCustomPanelVisible() {
+      customPanel.hidden = selectedLayout !== 3;
+    }
+
+    function setOrientation(orientation) {
+      selectedOrientation = orientation === 'portrait' ? 'portrait' : 'landscape';
+      epdFrame.classList.toggle('portrait', selectedOrientation === 'portrait');
+      epdFrame.classList.toggle('landscape', selectedOrientation !== 'portrait');
+      previewTitle.textContent = selectedOrientation === 'portrait' ? 'Preview 104 x 212' : 'Preview 212 x 104';
+      document.querySelectorAll('#orientationPicker button[data-orientation]').forEach(button => {
+        button.classList.toggle('active', button.dataset.orientation === selectedOrientation);
+      });
+      document.querySelectorAll('#layoutPicker button').forEach(item => {
+        item.classList.toggle('active', Number(item.dataset.layout) === selectedLayout);
+      });
+    }
+
+    function setCheckbox(selector, checked) {
+      const input = document.querySelector(selector);
+      if (input) input.checked = checked;
+    }
+
+    function applyCustomPreset(name) {
+      if (name === 'status') {
+        setOrientation('landscape');
+        custom.widgets = 0x3f;
+        custom.timePos = 0x52;
+        custom.datePos = 0x02;
+        custom.metricsPos = 0xc0;
+        custom.style = 0x01;
+        customExtension.widgets = 0x00;
+        customExtension.lineFlags = 0x01;
+        customExtension.horizontalY = 2;
+      } else if (name === 'clock') {
+        custom.widgets = 0x39;
+        custom.timePos = selectedOrientation === 'portrait' ? 0x46 : 0x43;
+        custom.datePos = 0x02;
+        custom.metricsPos = selectedOrientation === 'portrait' ? 0x0d : 0xc0;
+        custom.style = 0x03;
+        customExtension.widgets = 0x00;
+        customExtension.lineFlags = 0x01;
+        customExtension.horizontalY = selectedOrientation === 'portrait' ? 13 : 2;
+      } else if (name === 'calendar') {
+        setOrientation('landscape');
+        custom.widgets = 0x3f;
+        custom.timePos = 0x94;
+        custom.datePos = 0x92;
+        custom.metricsPos = 0xc0;
+        custom.style = 0x01;
+        customExtension.widgets = 0x01;
+        customExtension.calendarPos = 0x00;
+        customExtension.calendarStyle = 0x00;
+        customExtension.lineFlags = 0x03;
+        customExtension.horizontalY = 12;
+        customExtension.verticalX = 8;
+      } else {
+        setOrientation('portrait');
+        custom.widgets = 0x3f;
+        custom.timePos = 0x45;
+        custom.datePos = 0x02;
+        custom.metricsPos = 0x0d;
+        custom.style = 0x02;
+        customExtension.widgets = 0x01;
+        customExtension.calendarPos = 0x08;
+        customExtension.calendarStyle = 0x00;
+        customExtension.lineFlags = 0x01;
+        customExtension.horizontalY = 7;
+      }
+
+      setCheckbox('#widgetToggles input[data-widget="time"]', !!(custom.widgets & 0x01));
+      setCheckbox('#widgetToggles input[data-widget="date"]', !!(custom.widgets & 0x02));
+      setCheckbox('#widgetToggles input[data-widget="weekday"]', !!(custom.widgets & 0x04));
+      setCheckbox('#widgetToggles input[data-widget="temp"]', !!(custom.widgets & 0x08));
+      setCheckbox('#widgetToggles input[data-widget="battery"]', !!(custom.widgets & 0x10));
+      setCheckbox('#widgetToggles input[data-widget="border"]', !!(custom.widgets & 0x20));
+      setCheckbox('#extensionToggles input[data-extension="calendar"]', !!(customExtension.widgets & 0x01));
+      setCheckbox('#extensionToggles input[data-extension="horizontal"]', !!(customExtension.lineFlags & 0x01));
+      setCheckbox('#extensionToggles input[data-extension="vertical"]', !!(customExtension.lineFlags & 0x02));
+      timeScaleSelect.value = String(custom.style & 0x03);
+      infoScaleSelect.value = String((custom.style >> 2) & 0x01);
+      calendarStyleSelect.value = String(customExtension.calendarStyle);
+      document.querySelectorAll('#layoutPicker button').forEach(item => {
+        item.classList.toggle('active', Number(item.dataset.layout) === selectedLayout);
+      });
+      updatePreview();
+    }
+
+    function updateCustomFromControls() {
+      const bits = { time: 0x01, date: 0x02, weekday: 0x04, temp: 0x08, battery: 0x10, border: 0x20 };
+      custom.widgets = 0;
+      document.querySelectorAll('#widgetToggles input').forEach(input => {
+        if (input.checked) custom.widgets |= bits[input.dataset.widget];
+      });
+      custom.style = Number(timeScaleSelect.value) | (Number(infoScaleSelect.value) << 2);
+    }
+
+    function updateCustomExtensionFromControls() {
+      customExtension.widgets = document.querySelector('#extensionToggles input[data-extension="calendar"]').checked ? 0x01 : 0x00;
+      customExtension.lineFlags = 0;
+      if (document.querySelector('#extensionToggles input[data-extension="horizontal"]').checked) customExtension.lineFlags |= 0x01;
+      if (document.querySelector('#extensionToggles input[data-extension="vertical"]').checked) customExtension.lineFlags |= 0x02;
+      customExtension.calendarStyle = Number(calendarStyleSelect.value);
+    }
+
+    function hex(packet) {
+      return Array.from(packet).map(value => value.toString(16).padStart(2, '0')).join(' ');
+    }
+
+    function calendarPreviewData(date) {
+      const labels = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+      const firstColumn = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+      const cells = Array.from({ length: 42 }, (_, index) => {
+        const day = index - firstColumn + 1;
+        return day >= 1 && day <= lastDay
+          ? `<span class="${day === date.getDate() ? 'today' : ''}">${day}</span>`
+          : '<span></span>';
+      }).join('');
+      return { labels, cells };
+    }
+
+    function imageSettings() {
+      return {
+        fit: imageFitMode.value,
+        zoom: Number(imageZoom.value) / 100,
+        offsetX: Number(imageOffsetX.value) / 100,
+        offsetY: Number(imageOffsetY.value) / 100
+      };
+    }
+
+    function setImageProgress(value) {
+      imageProgress.value = value;
+      imageProgressValue.textContent = `${value}%`;
+    }
+
+    function renderImage(canvas) {
+      const width = 212;
+      const height = 104;
+      const settings = imageSettings();
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      const baseScale = settings.fit === 'cover'
+        ? Math.max(width / imageSource.width, height / imageSource.height)
+        : Math.min(width / imageSource.width, height / imageSource.height);
+      const drawWidth = imageSource.width * baseScale * settings.zoom;
+      const drawHeight = imageSource.height * baseScale * settings.zoom;
+      const offsetRangeX = Math.abs(width - drawWidth) / 2;
+      const offsetRangeY = Math.abs(height - drawHeight) / 2;
+      const drawX = (width - drawWidth) / 2 + (settings.offsetX * offsetRangeX);
+      const drawY = (height - drawHeight) / 2 + (settings.offsetY * offsetRangeY);
+
+      canvas.width = width;
+      canvas.height = height;
+      context.imageSmoothingEnabled = true;
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, width, height);
+      context.drawImage(imageSource, drawX, drawY, drawWidth, drawHeight);
+
+      const pixels = context.getImageData(0, 0, width, height);
+      for (let index = 0; index < pixels.data.length; index += 4) {
+        const luma = (pixels.data[index] * 299 + pixels.data[index + 1] * 587 + pixels.data[index + 2] * 114) / 1000;
+        const value = luma < 144 ? 0 : 255;
+        pixels.data[index] = value;
+        pixels.data[index + 1] = value;
+        pixels.data[index + 2] = value;
+        pixels.data[index + 3] = 255;
+      }
+      context.putImageData(pixels, 0, 0);
+      return pixels;
+    }
+
+    function buildImageFrame() {
+      const canvas = document.createElement('canvas');
+      const pixels = renderImage(canvas).data;
+      const frame = new Uint8Array(13 * 216).fill(0xff);
+
+      for (let y = 0; y < 104; y++) {
+        for (let x = 0; x < 212; x++) {
+          if (pixels[(y * 212 + x) * 4] === 0) {
+            const ramX = y;
+            const ramY = 211 - x;
+            const index = ramY * 13 + Math.floor(ramX / 8);
+            frame[index] &= ~(0x80 >> (ramX & 7));
+          }
+        }
+      }
+      return frame;
+    }
+
+    const epdGlyphs = {
+      '0': [0x3e, 0x51, 0x49, 0x45, 0x3e], '1': [0x00, 0x42, 0x7f, 0x40, 0x00],
+      '2': [0x42, 0x61, 0x51, 0x49, 0x46], '3': [0x21, 0x41, 0x45, 0x4b, 0x31],
+      '4': [0x18, 0x14, 0x12, 0x7f, 0x10], '5': [0x27, 0x45, 0x45, 0x45, 0x39],
+      '6': [0x3c, 0x4a, 0x49, 0x49, 0x30], '7': [0x01, 0x71, 0x09, 0x05, 0x03],
+      '8': [0x36, 0x49, 0x49, 0x49, 0x36], '9': [0x06, 0x49, 0x49, 0x29, 0x1e],
+      A: [0x7e, 0x11, 0x11, 0x11, 0x7e], B: [0x7f, 0x49, 0x49, 0x49, 0x36],
+      C: [0x3e, 0x41, 0x41, 0x41, 0x22], D: [0x7f, 0x41, 0x41, 0x22, 0x1c],
+      E: [0x7f, 0x49, 0x49, 0x49, 0x41], F: [0x7f, 0x09, 0x09, 0x09, 0x01],
+      G: [0x3e, 0x41, 0x49, 0x49, 0x7a], H: [0x7f, 0x08, 0x08, 0x08, 0x7f],
+      I: [0x00, 0x41, 0x7f, 0x41, 0x00], J: [0x20, 0x40, 0x41, 0x3f, 0x01],
+      K: [0x7f, 0x08, 0x14, 0x22, 0x41], L: [0x7f, 0x40, 0x40, 0x40, 0x40],
+      M: [0x7f, 0x02, 0x0c, 0x02, 0x7f], N: [0x7f, 0x04, 0x08, 0x10, 0x7f],
+      O: [0x3e, 0x41, 0x41, 0x41, 0x3e], P: [0x7f, 0x09, 0x09, 0x09, 0x06],
+      Q: [0x3e, 0x41, 0x51, 0x21, 0x5e], R: [0x7f, 0x09, 0x19, 0x29, 0x46],
+      S: [0x46, 0x49, 0x49, 0x49, 0x31], T: [0x01, 0x01, 0x7f, 0x01, 0x01],
+      U: [0x3f, 0x40, 0x40, 0x40, 0x3f], V: [0x1f, 0x20, 0x40, 0x20, 0x1f],
+      W: [0x3f, 0x40, 0x38, 0x40, 0x3f], X: [0x63, 0x14, 0x08, 0x14, 0x63],
+      Y: [0x07, 0x08, 0x70, 0x08, 0x07], Z: [0x61, 0x51, 0x49, 0x45, 0x43]
+    };
+    const VI_CIRCUMFLEX = 0x01;
+    const VI_BREVE = 0x02;
+    const VI_HORN = 0x04;
+    const VI_ACUTE = 0x08;
+    const VI_HOOK = 0x10;
+    const VI_DOT_BELOW = 0x20;
+
+    function previewGlyph(char, column) {
+      const glyph = epdGlyphs[char.toUpperCase()];
+      if (glyph) return glyph[column] || 0;
+      if (char === '.') return column === 2 ? 0x40 : 0;
+      if (char === ':') return column === 2 ? 0x14 : 0;
+      if (char === '-') return 0x08;
+      if (char === '/') return 0x40 >> column;
+      if (char === '^') return column === 0 ? 0x06 : ((column === 1 || column === 2) ? 0x09 : (column === 3 ? 0x06 : 0));
+      return 0;
+    }
+
+    function previewRect(ctx, x, y, width, height, white = false) {
+      ctx.fillStyle = white ? '#fff' : '#111';
+      ctx.fillRect(x, y, width, height);
+    }
+
+    function previewChar(ctx, x, y, char, scale = 1, white = false, bold = false) {
+      for (let column = 0; column < 5; column++) {
+        const bits = previewGlyph(char, column);
+        for (let row = 0; row < 7; row++) {
+          if (bits & (1 << row)) previewRect(ctx, x + column * scale, y + row * scale, scale + (bold ? 1 : 0), scale, white);
+        }
+      }
+    }
+
+    function previewText(ctx, x, y, text, scale = 1, white = false, bold = false) {
+      [...text].forEach((char, index) => previewChar(ctx, x + index * 6 * scale, y, char, scale, white, bold));
+    }
+
+    function previewTextCentered(ctx, left, width, y, text, scale = 1, white = false, bold = false) {
+      const textWidth = text.length * 6 * scale;
+      previewText(ctx, left + Math.max(0, Math.floor((width - textWidth) / 2)), y, text, scale, white, bold);
+    }
+
+    function previewViMark(ctx, x, y, scale, marks) {
+      if (marks & VI_CIRCUMFLEX) {
+        previewRect(ctx, x + scale, y + scale, scale, scale);
+        previewRect(ctx, x + 2 * scale, y, scale, scale);
+        previewRect(ctx, x + 3 * scale, y + scale, scale, scale);
+      }
+      if (marks & VI_BREVE) {
+        previewRect(ctx, x, y + scale, scale, scale);
+        previewRect(ctx, x + scale, y, 3 * scale, scale);
+        previewRect(ctx, x + 4 * scale, y + scale, scale, scale);
+      }
+      if (marks & VI_ACUTE) {
+        previewRect(ctx, x + 3 * scale, y, scale, scale);
+        previewRect(ctx, x + 2 * scale, y + scale, scale, scale);
+      }
+      if (marks & VI_HOOK) {
+        previewRect(ctx, x + 3 * scale, y, scale, scale);
+        previewRect(ctx, x + 4 * scale, y + scale, scale, scale);
+      }
+      if (marks & VI_HORN) {
+        previewRect(ctx, x + 5 * scale, y + 3 * scale, scale, 2 * scale);
+        previewRect(ctx, x + 4 * scale, y + 2 * scale, scale, scale);
+      }
+      if (marks & VI_DOT_BELOW) previewRect(ctx, x + 2 * scale, y + 9 * scale, scale, scale);
+    }
+
+    function previewViText(ctx, x, y, text, marks, scale = 1) {
+      [...text].forEach((char, index) => {
+        const charX = x + index * 6 * scale;
+        previewChar(ctx, charX, y + 2 * scale, char, scale);
+        previewViMark(ctx, charX, y, scale, marks[index] || 0);
+      });
+    }
+
+    function previewLunarMarks(text) {
+      const marks = Array(text.length).fill(0);
+      marks[0] = VI_CIRCUMFLEX;
+      marks[4] = VI_DOT_BELOW;
+      return marks;
+    }
+
+    function previewDigitalSegments(char) {
+      return '0123456789'.includes(char) ? [0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f][Number(char)] : 0;
+    }
+
+    function isSegmentFont(font) {
+      return font === 2 || font === 3;
+    }
+
+    function isTtfFont(font) {
+      return font === 1 || font === 5 || font === 6;
+    }
+
+    function isBigDigitFont(font) {
+      return isSegmentFont(font) || isTtfFont(font);
+    }
+
+    function previewDigitalDigit(ctx, x, y, char, scale) {
+      const width = 4 * scale;
+      const half = 3 * scale;
+      const thickness = scale > 2 ? scale - 2 : 1;
+      const segments = previewDigitalSegments(char);
+      if (segments & 0x01) previewRect(ctx, x + thickness, y, width - 2 * thickness, thickness);
+      if (segments & 0x02) previewRect(ctx, x + width - thickness, y + thickness, thickness, half - thickness);
+      if (segments & 0x04) previewRect(ctx, x + width - thickness, y + half + thickness, thickness, half - thickness);
+      if (segments & 0x08) previewRect(ctx, x + thickness, y + 2 * half, width - 2 * thickness, thickness);
+      if (segments & 0x10) previewRect(ctx, x, y + half + thickness, thickness, half - thickness);
+      if (segments & 0x20) previewRect(ctx, x, y + thickness, thickness, half - thickness);
+      if (segments & 0x40) previewRect(ctx, x + thickness, y + half, width - 2 * thickness, thickness);
+    }
+
+    function previewSegmentThickness(scale, font) {
+      if (font === 3) return scale > 5 ? Math.floor(scale / 2) : 2;
+      if (font === 4) return scale > 2 ? scale + 1 : 2;
+      return scale > 2 ? scale - 2 : 1;
+    }
+
+    function previewBeveledRect(ctx, x, y, width, height) {
+      const cut = Math.max(1, Math.min(width, height) - 1);
+      previewRect(ctx, x, y, width, height);
+      previewRect(ctx, x, y, cut, cut, true);
+      previewRect(ctx, x + width - cut, y, cut, cut, true);
+      previewRect(ctx, x, y + height - cut, cut, cut, true);
+      previewRect(ctx, x + width - cut, y + height - cut, cut, cut, true);
+    }
+
+    function previewLcdDigit(ctx, x, y, char, scale) {
+      const width = 4 * scale;
+      const half = 3 * scale;
+      const thickness = previewSegmentThickness(scale, 3);
+      const segments = previewDigitalSegments(char);
+      if (segments & 0x01) previewBeveledRect(ctx, x + thickness, y, width - 2 * thickness, thickness);
+      if (segments & 0x02) previewBeveledRect(ctx, x + width - thickness, y + thickness, thickness, half - thickness);
+      if (segments & 0x04) previewBeveledRect(ctx, x + width - thickness, y + half + thickness, thickness, half - thickness);
+      if (segments & 0x08) previewBeveledRect(ctx, x + thickness, y + 2 * half, width - 2 * thickness, thickness);
+      if (segments & 0x10) previewBeveledRect(ctx, x, y + half + thickness, thickness, half - thickness);
+      if (segments & 0x20) previewBeveledRect(ctx, x, y + thickness, thickness, half - thickness);
+      if (segments & 0x40) previewBeveledRect(ctx, x + thickness, y + half, width - 2 * thickness, thickness);
+    }
+
+    function previewSegmentDigit(ctx, x, y, char, scale, font) {
+      if (font === 3) {
+        previewLcdDigit(ctx, x, y, char, scale);
+      } else {
+        previewDigitalDigit(ctx, x, y, char, scale);
+      }
+    }
+
+    function previewTtfFontFamily(font) {
+      if (font === 1) return '"EPD Orbitron Bold"';
+      return font === 5 ? '"EPD Archivo Black"' : '"EPD Russo One"';
+    }
+
+    function previewTtfFontSize(scale) {
+      if (scale >= 8) return 54;
+      if (scale >= 5) return 40;
+      if (scale >= 4) return 32;
+      if (scale >= 3) return 25;
+      return 18;
+    }
+
+    function previewTtfApply(ctx, scale, font) {
+      ctx.font = `${previewTtfFontSize(scale)}px ${previewTtfFontFamily(font)}, Impact, monospace`;
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = '#111';
+    }
+
+    function previewTtfText(ctx, x, y, text, scale, font) {
+      previewTtfApply(ctx, scale, font);
+      ctx.fillText(text, x, y);
+    }
+
+    function previewTtfWidth(ctx, text, scale, font) {
+      ctx.save();
+      previewTtfApply(ctx, scale, font);
+      const width = Math.ceil(ctx.measureText(text).width);
+      ctx.restore();
+      return width;
+    }
+
+    function previewTime(ctx, x, y, time, scale, font) {
+      if (isTtfFont(font)) {
+        previewTtfText(ctx, x, y, time, scale, font);
+        return;
+      }
+      if (isSegmentFont(font)) {
+        const width = 4 * scale;
+        const gap = scale;
+        previewSegmentDigit(ctx, x, y, time[0], scale, font);
+        previewSegmentDigit(ctx, x + width + gap, y, time[1], scale, font);
+        previewRect(ctx, x + 2 * (width + gap), y + 2 * scale, scale, scale);
+        previewRect(ctx, x + 2 * (width + gap), y + 5 * scale, scale, scale);
+        previewSegmentDigit(ctx, x + 2 * width + 4 * gap, y, time[3], scale, font);
+        previewSegmentDigit(ctx, x + 3 * width + 5 * gap, y, time[4], scale, font);
+        return;
+      }
+      previewText(ctx, x, y, time, scale, false, font === 1);
+    }
+
+    function previewCenteredTime(ctx, left, boxWidth, y, time, scale, font) {
+      let firstPixel = Number.MAX_SAFE_INTEGER;
+      let lastPixel = 0;
+      if (isTtfFont(font)) {
+        firstPixel = 0;
+        lastPixel = previewTtfWidth(ctx, time, scale, font);
+      } else if (isSegmentFont(font)) {
+        const width = 4 * scale;
+        const gap = scale;
+        const thickness = previewSegmentThickness(scale, font);
+        const digitIndexes = [0, 1, 3, 4];
+        digitIndexes.forEach((timeIndex, index) => {
+          const baseX = index < 2 ? index * (width + gap) : (index === 2 ? 12 : 17) * scale;
+          const segments = previewDigitalSegments(time[timeIndex]);
+          if (segments & 0x30) {
+            firstPixel = Math.min(firstPixel, baseX);
+            lastPixel = Math.max(lastPixel, baseX + thickness);
+          }
+          if (segments & 0x49) {
+            firstPixel = Math.min(firstPixel, baseX + thickness);
+            lastPixel = Math.max(lastPixel, baseX + width - thickness);
+          }
+          if (segments & 0x06) {
+            firstPixel = Math.min(firstPixel, baseX + width - thickness);
+            lastPixel = Math.max(lastPixel, baseX + width);
+          }
+        });
+        firstPixel = Math.min(firstPixel, 10 * scale);
+        lastPixel = Math.max(lastPixel, 11 * scale);
+      } else {
+        [...time].forEach((char, charIndex) => {
+          for (let column = 0; column < 5; column++) {
+            if (previewGlyph(char, column) !== 0) {
+              const baseX = (charIndex * 6 + column) * scale;
+              firstPixel = Math.min(firstPixel, baseX);
+              lastPixel = Math.max(lastPixel, baseX + scale + (font === 1 ? 1 : 0));
+            }
+          }
+        });
+      }
+      if (firstPixel === Number.MAX_SAFE_INTEGER) { firstPixel = 0; lastPixel = 0; }
+      const x = Math.max(left, left + Math.floor((boxWidth - (lastPixel - firstPixel)) / 2) - firstPixel);
+      previewTime(ctx, x, y, time, scale, font);
+    }
+
+    function previewDate(date, fullYear) {
+      const pad = value => String(value).padStart(2, '0');
+      return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${fullYear ? date.getFullYear() : String(date.getFullYear()).slice(2)}`;
+    }
+
+    function previewWeekday(ctx, x, y, date, scale = 1, white = false) {
+      const weekday = date.getDay() === 0 ? 'CN' : `T${date.getDay() + 1}`;
+      previewText(ctx, x, y, weekday, scale, white);
+    }
+
+    function previewWeekdayLong(date) {
+      return ['CHU NHAT', 'THU HAI', 'THU BA', 'THU TU', 'THU NAM', 'THU SAU', 'THU BAY'][date.getDay()];
+    }
+
+    function previewWeekdayLongMarks(date) {
+      const markers = [
+        [0, 0, VI_HOOK, 0, 0, 0, VI_CIRCUMFLEX | VI_DOT_BELOW, 0],
+        [0, 0, VI_HORN | VI_ACUTE, 0, 0, 0, 0],
+        [0, 0, VI_HORN | VI_ACUTE, 0, 0, 0],
+        [0, 0, VI_HORN | VI_ACUTE, 0, 0, VI_HORN],
+        [0, 0, VI_HORN | VI_ACUTE, 0, 0, VI_BREVE, 0],
+        [0, 0, VI_HORN | VI_ACUTE, 0, 0, VI_ACUTE, 0],
+        [0, 0, VI_HORN | VI_ACUTE, 0, 0, VI_HOOK, 0]
+      ];
+      return markers[date.getDay()];
+    }
+
+    function previewCalendarDay(ctx, x, y, value, selected, bold = false) {
+      const digits = String(value).padStart(2, '0');
+      if (selected) {
+        previewRect(ctx, x - 1, y - 1, 14, 9);
+        if (value >= 10) {
+          previewChar(ctx, x, y, digits[0], 1, true);
+          previewChar(ctx, x + 6, y, digits[1], 1, true);
+        } else previewChar(ctx, x + 3, y, digits[1], 1, true);
+      } else if (value >= 10) {
+        previewChar(ctx, x, y, digits[0], 1, false, bold);
+        previewChar(ctx, x + 6, y, digits[1], 1, false, bold);
+      } else previewChar(ctx, x + 3, y, digits[1], 1, false, bold);
+    }
+
+    function previewCalendarGrid(ctx, date, x, y, darkHeader, boldDays = false) {
+      const labels = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+      if (darkHeader) previewRect(ctx, x, y, 112, 10);
+      labels.forEach((label, index) => previewText(ctx, x + index * 16 + 2, y + (darkHeader ? 2 : 1), label, 1, darkHeader));
+      const first = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+      let column = first === 0 ? 0 : first;
+      let row = 0;
+      for (let day = 1; day <= lastDay; day++) {
+        previewCalendarDay(ctx, x + 2 + column * 16, y + 12 + row * 10, day, day === date.getDate(), boldDays);
+        column++;
+        if (column === 7) { column = 0; row++; }
+      }
+    }
+
+    function previewCalendarGridSmall(ctx, date, x, y, darkHeader) {
+      const labels = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+      if (darkHeader) previewRect(ctx, x, y, 94, 10);
+      labels.forEach((label, index) => previewText(ctx, x + index * 13 + 1, y + (darkHeader ? 2 : 1), label, 1, darkHeader));
+      const first = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+      let column = first === 0 ? 0 : first;
+      let row = 0;
+      for (let day = 1; day <= lastDay; day++) {
+        previewCalendarDay(ctx, x + column * 13, y + 12 + row * 10, day, day === date.getDate(), false);
+        column++;
+        if (column === 7) { column = 0; row++; }
+      }
+    }
+
+    function previewBattery(ctx, x, y) {
+      previewRect(ctx, x + 2, y, 13, 8);
+      previewRect(ctx, x + 3, y + 1, 11, 6, true);
+      previewRect(ctx, x, y + 2, 2, 4);
+      previewRect(ctx, x + 4, y + 2, 9, 4);
+    }
+
+    function previewLunar(date) {
+      const lunar = solarToVietnameseLunar(date);
+      return `AM LICH ${String(lunar.day).padStart(2, '0')}-${String(lunar.month).padStart(2, '0')}${lunar.leap ? 'L' : ''}`;
+    }
+
+    function previewLine(ctx, x0, y0, x1, y1) {
+      let dx = Math.abs(x1 - x0);
+      let sx = x0 < x1 ? 1 : -1;
+      let dy = -Math.abs(y1 - y0);
+      let sy = y0 < y1 ? 1 : -1;
+      let error = dx + dy;
+      while (true) {
+        previewRect(ctx, x0, y0, 1, 1);
+        if (x0 === x1 && y0 === y1) break;
+        const twice = 2 * error;
+        if (twice >= dy) { error += dy; x0 += sx; }
+        if (twice <= dx) { error += dx; y0 += sy; }
+      }
+    }
+
+    function previewCircle(ctx, cx, cy, radius) {
+      let x = radius;
+      let y = 0;
+      let error = 1 - x;
+      while (x >= y) {
+        [[x, y], [y, x], [-y, x], [-x, y], [-x, -y], [-y, -x], [y, -x], [x, -y]].forEach(([dx, dy]) => previewRect(ctx, cx + dx, cy + dy, 1, 1));
+        y++;
+        if (error < 0) error += 2 * y + 1;
+        else { x--; error += 2 * (y - x) + 1; }
+      }
+    }
+
+    function previewAnalog(ctx, cx, cy, date) {
+      const dx = [0, 12, 21, 25, 21, 12, 0, -12, -21, -25, -21, -12];
+      const dy = [-25, -21, -12, 0, 12, 21, 25, 21, 12, 0, -12, -21];
+      previewCircle(ctx, cx, cy, 26);
+      dx.forEach((value, index) => previewRect(ctx, cx + value, cy + dy[index], 2, 2));
+      const hour = date.getHours() % 12;
+      const minute = Math.floor((date.getMinutes() + 2) / 5) % 12;
+      previewLine(ctx, cx, cy, cx + Math.trunc(dx[hour] * 12 / 25), cy + Math.trunc(dy[hour] * 12 / 25));
+      previewLine(ctx, cx, cy, cx + Math.trunc(dx[minute] * 21 / 25), cy + Math.trunc(dy[minute] * 21 / 25));
+      previewRect(ctx, cx - 1, cy - 1, 3, 3);
+    }
+
+    function renderPortraitPresetCanvas(date, layout, selectedFont) {
+      preview.innerHTML = '<canvas id="layoutPreviewCanvas" class="image-canvas" width="104" height="212"></canvas>';
+      const canvas = document.getElementById('layoutPreviewCanvas');
+      const ctx = canvas.getContext('2d');
+      const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      const lunar = previewLunar(date);
+      const lunarMarks = previewLunarMarks(lunar);
+      const monthYear = `${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+      const dayMonth = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const weekday = date.getDay() === 0 ? 'CN' : `T${date.getDay() + 1}`;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, 104, 212);
+
+      const frame = () => {
+        previewRect(ctx, 1, 1, 102, 1); previewRect(ctx, 1, 210, 102, 1);
+        previewRect(ctx, 1, 1, 1, 210); previewRect(ctx, 102, 1, 1, 210);
+      };
+      const topMetrics = () => {
+        previewText(ctx, 5, 7, '29^C');
+        previewText(ctx, 55, 7, '3.3V');
+        previewBattery(ctx, 84, 6);
+        previewRect(ctx, 2, 20, 100, 1);
+      };
+      const bottomMetrics = () => {
+        previewRect(ctx, 2, 190, 100, 1);
+        previewText(ctx, 6, 197, '29^C');
+        previewText(ctx, 55, 197, '3.3V');
+        previewBattery(ctx, 84, 196);
+      };
+      const centeredLunar = y => {
+        previewViText(ctx, Math.max(2, Math.floor((104 - lunar.length * 6) / 2)), y, lunar, lunarMarks);
+      };
+
+      frame();
+      if (layout === 5) {
+        topMetrics();
+        previewTextCentered(ctx, 2, 100, 33, `${weekday} ${previewDate(date, true)}`, 1);
+        previewCenteredTime(ctx, 2, 100, 62, time, isBigDigitFont(selectedFont) ? 4 : 3, selectedFont);
+        centeredLunar(118);
+      } else if (layout === 9) {
+        topMetrics();
+        previewTextCentered(ctx, 2, 100, 35, `${weekday} ${dayMonth}`, 2);
+        centeredLunar(59);
+        previewAnalog(ctx, 52, 112, date);
+        previewCenteredTime(ctx, 2, 100, 169, time, 2, selectedFont);
+      } else if (layout === 7) {
+        topMetrics();
+        previewTextCentered(ctx, 2, 100, 28, monthYear, 2);
+        previewCalendarGridSmall(ctx, date, 5, 47, true);
+        centeredLunar(126);
+        previewCenteredTime(ctx, 2, 100, 158, time, isBigDigitFont(selectedFont) ? 4 : 3, selectedFont);
+      } else if (layout === 10) {
+        previewTextCentered(ctx, 2, 100, 9, monthYear, 1);
+        previewRect(ctx, 2, 22, 100, 1);
+        previewCalendarGridSmall(ctx, date, 5, 30, true);
+        centeredLunar(110);
+        previewCenteredTime(ctx, 2, 100, 140, time, isBigDigitFont(selectedFont) ? 4 : 3, selectedFont);
+        bottomMetrics();
+      } else if (layout === 11) {
+        previewTextCentered(ctx, 2, 100, 9, monthYear, 1);
+        previewRect(ctx, 2, 22, 100, 1);
+        previewCalendarGridSmall(ctx, date, 5, 32, true);
+        centeredLunar(152);
+        bottomMetrics();
+      }
+    }
+
+    function renderPresetCanvas(date, layout, selectedFont) {
+      preview.innerHTML = '<canvas id="layoutPreviewCanvas" class="image-canvas" width="212" height="104"></canvas>';
+      const canvas = document.getElementById('layoutPreviewCanvas');
+      const ctx = canvas.getContext('2d');
+      const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      const lunar = previewLunar(date);
+      const lunarMarks = previewLunarMarks(lunar);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, 212, 104);
+
+      const monthYear = `${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+      const leftCalendar = (boldDays = false) => {
+        previewRect(ctx, 2, 2, 114, 1); previewRect(ctx, 2, 101, 114, 1);
+        previewRect(ctx, 2, 2, 1, 100); previewRect(ctx, 115, 2, 1, 100);
+        previewCalendarGrid(ctx, date, 3, 4, true, boldDays);
+        previewViText(ctx, 3 + Math.floor((112 - lunar.length * 6) / 2), 89, lunar, lunarMarks);
+      };
+      const leftCalendarWithMonth = () => {
+        previewRect(ctx, 2, 2, 114, 1); previewRect(ctx, 2, 101, 114, 1);
+        previewRect(ctx, 2, 2, 1, 100); previewRect(ctx, 115, 2, 1, 100);
+        previewTextCentered(ctx, 3, 112, 4, monthYear, 2);
+        previewRect(ctx, 3, 20, 112, 1);
+        previewCalendarGrid(ctx, date, 3, 22, true, false);
+        previewViText(ctx, 3 + Math.floor((112 - lunar.length * 6) / 2), 89, lunar, lunarMarks);
+      };
+      const rightFrame = (rows, split = false) => {
+        previewRect(ctx, 116, 2, 94, 1); previewRect(ctx, 209, 2, 1, 100); previewRect(ctx, 116, 101, 94, 1);
+        rows.forEach(y => previewRect(ctx, 116, y, 94, 1));
+        if (split) previewRect(ctx, 164, 18, 1, 28);
+      };
+      const drawLargeDay = (x, y, font, scale = 4) => {
+        const digits = String(date.getDate()).padStart(2, '0');
+        if (isTtfFont(font)) { previewTtfText(ctx, x, y, digits, scale, font); }
+        else if (isSegmentFont(font)) { previewSegmentDigit(ctx, x, y, digits[0], scale, font); previewSegmentDigit(ctx, x + 5 * scale, y, digits[1], scale, font); }
+        else { previewChar(ctx, x, y, digits[0], scale, false, font === 1); previewChar(ctx, x + 6 * scale, y, digits[1], scale, false, font === 1); }
+      };
+      const drawHeader = () => {
+        previewWeekday(ctx, 5, 4, date); previewText(ctx, 23, 4, previewDate(date, true)); previewText(ctx, 142, 4, '29^C'); previewText(ctx, 169, 4, '3.3V'); previewBattery(ctx, 193, 3); previewRect(ctx, 3, 15, 206, 1);
+      };
+      const drawWeekdayStacked = () => {
+        const centeredVi = (y, text, marks) => previewViText(ctx, 116 + Math.floor((48 - text.length * 6) / 2), y, text, marks);
+        const second = date.getDay() === 0 ? 'NHAT' : ['HAI', 'BA', 'TU', 'NAM', 'SAU', 'BAY'][date.getDay() - 1];
+        const secondMarks = date.getDay() === 0
+          ? [0, 0, VI_CIRCUMFLEX | VI_DOT_BELOW, 0]
+          : [[0, 0, 0], [0, 0], [0, VI_HORN], [0, VI_BREVE, 0], [0, VI_ACUTE, 0], [0, VI_HOOK, 0]][date.getDay() - 1];
+        if (date.getDay() === 0) {
+          centeredVi(22, 'CHU', [0, 0, VI_HOOK]);
+          centeredVi(35, second, secondMarks);
+        } else {
+          centeredVi(22, 'THU', [0, 0, VI_HORN | VI_ACUTE]);
+          centeredVi(35, second, secondMarks);
+        }
+      };
+      const drawBigClock = font => { drawHeader(); previewCenteredTime(ctx, 0, 212, 23, time, isBigDigitFont(font) ? 8 : 6, font); previewViText(ctx, Math.floor((212 - lunar.length * 12) / 2), 80, lunar, lunarMarks, 2); };
+
+      if (layout === 1) {
+        previewCenteredTime(ctx, 0, 212, 8, time, isBigDigitFont(selectedFont) ? 5 : 4, selectedFont);
+        previewText(ctx, 58, 48, previewDate(date, false), 2); previewText(ctx, 70, 76, '29^C 3.3V', 2);
+      } else if (layout === 2) {
+        previewRect(ctx, 2, 2, 208, 1); previewRect(ctx, 2, 101, 208, 1); previewRect(ctx, 2, 2, 1, 100); previewRect(ctx, 209, 2, 1, 100);
+        previewRect(ctx, 3, 19, 206, 1); previewRect(ctx, 123, 2, 1, 99); previewRect(ctx, 124, 57, 85, 1); previewRect(ctx, 124, 86, 85, 1);
+        const labels = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        previewRect(ctx, 3, 3, 120, 15); labels.forEach((label, index) => previewText(ctx, 5 + index * 16, 6, label, 1, true));
+        const first = new Date(date.getFullYear(), date.getMonth(), 1).getDay(); const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(); let column = first === 0 ? 0 : first; let row = 0;
+        for (let day = 1; day <= lastDay; day++) { previewCalendarDay(ctx, 5 + column * 16, 24 + row * 10, day, day === date.getDate()); column++; if (column === 7) { column = 0; row++; } }
+        previewViText(ctx, 3 + Math.floor((120 - lunar.length * 6) / 2), 89, lunar, lunarMarks);
+        previewText(ctx, 126, 5, `${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`, 2); drawLargeDay(130, 25, selectedFont); previewWeekday(ctx, 182, 30, date, 2);
+        previewCenteredTime(ctx, 124, 85, 62, time, 3, selectedFont); previewText(ctx, 127, 90, '29^C 3.3V'); previewBattery(ctx, 189, 89);
+      } else if (layout === 4) drawBigClock(1);
+      else if (layout === 5) drawBigClock(selectedFont);
+      else if (layout === 8) drawBigClock(0);
+      else if (layout === 6) {
+        leftCalendar(); rightFrame([73]); previewText(ctx, 129, 5, previewDate(date, false)); previewText(ctx, 185, 5, '29^C'); drawLargeDay(145, 23, selectedFont); previewCenteredTime(ctx, 116, 94, 79, time, 3, selectedFont);
+      } else if (layout === 7) {
+        leftCalendar(); rightFrame([31, 72]); previewTextCentered(ctx, 116, 94, 7, monthYear, 2); previewCenteredTime(ctx, 116, 94, 39, time, 3, selectedFont); previewText(ctx, 122, 82, '29^C'); previewText(ctx, 164, 82, '3.3V'); previewBattery(ctx, 190, 81);
+      } else if (layout === 9) {
+        leftCalendarWithMonth(); rightFrame([22, 83]); previewText(ctx, 120, 8, '29^C'); previewText(ctx, 164, 8, '3.3V'); previewBattery(ctx, 190, 7); previewAnalog(ctx, 163, 53, date); previewCenteredTime(ctx, 116, 94, 85, time, 2, selectedFont);
+      } else if (layout === 10) {
+        leftCalendar(false); rightFrame([18, 46, 79], true); previewText(ctx, 142, 6, monthYear); drawWeekdayStacked(); drawLargeDay(178, 26, selectedFont, 2); previewCenteredTime(ctx, 116, 94, 52, time, 3, selectedFont); previewText(ctx, 120, 88, '29^C'); previewText(ctx, 163, 88, '3.3V'); previewBattery(ctx, 189, 87);
+      } else if (layout === 11) {
+        const labels = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        previewRect(ctx, 2, 2, 208, 16); labels.forEach((label, index) => previewText(ctx, 8 + index * 29, 6, label, 1, true));
+        const first = new Date(date.getFullYear(), date.getMonth(), 1).getDay(); const last = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(); let column = first === 0 ? 0 : first; let row = 0;
+        for (let day = 1; day <= last; day++) { const x = 5 + column * 30; const y = 23 + row * 13; const digits = String(day).padStart(2, '0'); if (day === date.getDate()) { previewRect(ctx, x - 2, y - 1, 25, 12); if (day >= 10) { previewChar(ctx, x, y, digits[0], 1, true); previewChar(ctx, x + 8, y, digits[1], 1, true); } else previewChar(ctx, x + 4, y, digits[1], 1, true); } else if (day >= 10) { previewChar(ctx, x, y, digits[0]); previewChar(ctx, x + 8, y, digits[1]); } else previewChar(ctx, x + 4, y, digits[1]); column++; if (column === 7) { column = 0; row++; } }
+      }
+    }
+
+    function updatePreview() {
+      const date = dateFromInput();
+      const pad = value => String(value).padStart(2, '0');
+      const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+      const shortDate = `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${String(date.getFullYear()).slice(2)}`;
+      const fullDate = `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()}`;
+      const status = '29°C 3.3V';
+      epdFrame.classList.toggle('portrait', selectedOrientation === 'portrait');
+      epdFrame.classList.toggle('landscape', selectedOrientation !== 'portrait');
+      epdFrame.classList.toggle('rotated', previewRotated);
+      preview.classList.toggle('calendar-mode', selectedLayout === 2);
+      preview.classList.toggle('custom-mode', selectedLayout === 3);
+      preview.classList.toggle('preset-mode', selectedLayout >= 4);
+      preview.classList.toggle('image-mode', imagePreviewActive && imageSource !== null);
+      preview.classList.toggle('canvas-mode', [1, 2, 4, 5, 6, 7, 8, 9, 10, 11].includes(selectedLayout) && !(imagePreviewActive && imageSource));
+      preview.classList.remove('font-classic', 'font-bold', 'font-digital', 'font-lcd', 'font-archivo', 'font-russo');
+      preview.classList.add(['font-classic', 'font-bold', 'font-digital', 'font-lcd', 'font-classic', 'font-archivo', 'font-russo'][selectedFont] || 'font-classic');
+
+      if (imagePreviewActive && imageSource) {
+        preview.innerHTML = '<canvas id="imagePreviewCanvas" class="image-canvas" width="212" height="104"></canvas>';
+        renderImage(document.getElementById('imagePreviewCanvas'));
+        return;
+      }
+
+      if (selectedOrientation === 'portrait' && [4, 5, 7, 9, 10, 11].includes(selectedLayout)) {
+        renderPortraitPresetCanvas(date, selectedLayout, selectedFont);
+        return;
+      }
+
+      if ([1, 2, 4, 5, 6, 7, 8, 9, 10, 11].includes(selectedLayout)) {
+        renderPresetCanvas(date, selectedLayout, selectedFont);
+        return;
+      }
+
+      if (selectedLayout === 0) {
+        preview.innerHTML = `<div class="mid">29°C</div><div class="mid">3.3V</div>`;
+      } else if (selectedLayout === 2) {
+        const labels = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        const firstColumn = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+        const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+        const cells = Array.from({ length: 42 }, (_, index) => {
+          const day = index - firstColumn + 1;
+          return day >= 1 && day <= lastDay
+            ? `<span class="${day === date.getDate() ? 'today' : ''}">${day}</span>`
+            : '<span></span>';
+        }).join('');
+        const weekday = labels[date.getDay()];
+        preview.innerHTML = `
+          <div class="calendar-preview">
+            <div class="calendar-weekdays">${labels.map(label => `<span>${label}</span>`).join('')}</div>
+            <div class="calendar-days">${cells}</div>
+            <div class="calendar-month-note">MONTH ${pad(date.getMonth() + 1)}</div>
+            <div class="calendar-side">
+              <div class="month">${pad(date.getMonth() + 1)}-${date.getFullYear()}</div>
+              <div class="day-row"><div class="day">${pad(date.getDate())}</div><div class="weekday">${weekday}</div></div>
+              <div class="time">${time}</div>
+              <div class="metrics">${status}</div>
+            </div>
+          </div>`;
+      } else if (selectedLayout === 3) {
+        const weekday = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][date.getDay()];
+        const info = [custom.widgets & 0x08 ? '29°C' : '', custom.widgets & 0x10 ? '3.3V' : ''].filter(Boolean).join(' ');
+        const labels = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        const firstColumn = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+        const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+        const cells = Array.from({ length: 42 }, (_, index) => {
+          const day = index - firstColumn + 1;
+          return day >= 1 && day <= lastDay
+            ? `<span class="${day === date.getDate() ? 'today' : ''}">${day}</span>`
+            : '<span></span>';
+        }).join('');
+        const timeLogicalHeight = 7 * ((custom.style & 0x03) + 2);
+        const infoLogicalHeight = 7 * ((custom.style & 0x04) ? 2 : 1);
+        const widgets = [];
+        if (custom.widgets & 0x01) widgets.push(`<div class="custom-preview-widget time" data-drag-widget="time" style="${positionStyle(custom.timePos)}--widget-font:${logicalFontSize(timeLogicalHeight)}">${time}</div>`);
+        if (custom.widgets & 0x02) widgets.push(`<div class="custom-preview-widget info" data-drag-widget="date" style="${positionStyle(custom.datePos)}--widget-font:${logicalFontSize(infoLogicalHeight)}">${shortDate}</div>`);
+        if (custom.widgets & 0x04) widgets.push(`<div class="custom-preview-widget info" data-drag-widget="date" style="left:${(((custom.datePos >> 4) & 0x0f) / 15) * 100}%;top:${(((custom.datePos & 0x0f) / 15) * 100) + 8}%;--widget-font:${logicalFontSize(infoLogicalHeight)}">${weekday}</div>`);
+        if (info) widgets.push(`<div class="custom-preview-widget info" data-drag-widget="metrics" style="${positionStyle(custom.metricsPos)}--widget-font:${logicalFontSize(infoLogicalHeight)}">${info}</div>`);
+        if (customExtension.widgets & 0x01) widgets.push(`<div class="custom-preview-calendar" data-drag-widget="calendar" style="${positionStyle(customExtension.calendarPos)}"><div class="custom-calendar-head" ${customExtension.calendarStyle & 0x01 ? 'hidden' : ''}>${labels.map(label => `<span>${label}</span>`).join('')}</div><div class="custom-calendar-days">${cells}</div></div>`);
+        if (customExtension.lineFlags & 0x01) widgets.push(`<div class="custom-divider horizontal" data-drag-widget="hline" style="top:${(customExtension.horizontalY / 15) * 100}%"></div>`);
+        if (customExtension.lineFlags & 0x02) widgets.push(`<div class="custom-divider vertical" data-drag-widget="vline" style="left:${(customExtension.verticalX / 15) * 100}%"></div>`);
+        preview.innerHTML = `${custom.widgets & 0x20 ? '<div class="calendar-preview" style="position:absolute;inset:0;border:1px solid #111"></div>' : ''}${widgets.join('')}`;
+      } else if (selectedLayout === 11) {
+        const calendar = calendarPreviewData(date);
+        preview.innerHTML = `<div class="full-month-preview"><div class="head">${calendar.labels.map(label => `<span>${label}</span>`).join('')}</div><div class="days">${calendar.cells}</div></div>`;
+      } else if ([6, 7, 9, 10].includes(selectedLayout)) {
+        const calendar = calendarPreviewData(date);
+        const weekday = calendar.labels[date.getDay()];
+        const calendarMini = `<div class="calendar-mini"><div class="head">${calendar.labels.map(label => `<span>${label}</span>`).join('')}</div><div class="days">${calendar.cells}</div><div class="footer">MONTH ${pad(date.getMonth() + 1)}</div></div>`;
+        let layoutClass = '';
+        let right = '';
+        if (selectedLayout === 6) {
+          layoutClass = 'calendar-day';
+          right = `<div>${fullDate}</div><div class="split-row"><span>${weekday}</span><span class="large-day">${pad(date.getDate())}</span></div><div class="large-time">${time}</div><div class="metric">29C 3.3V</div>`;
+        } else if (selectedLayout === 7) {
+          layoutClass = 'calendar-time';
+          right = `<div>29C  3.3V</div><div class="large-time">${time}</div><div>${fullDate}</div><div class="metric">${weekday}</div>`;
+        } else if (selectedLayout === 9) {
+          layoutClass = 'calendar-analog';
+          right = `<div>${shortDate}</div><div><div class="analog-face">12<br>${pad(date.getHours())}:${pad(date.getMinutes())}<br>6</div></div><div class="time-battery"><span>${time}</span><span>3.3V</span></div>`;
+        } else {
+          layoutClass = 'calendar-split';
+          right = `<div>${fullDate}</div><div class="split-row"><span>${weekday}</span><span class="large-day">${pad(date.getDate())}</span></div><div class="large-time">${time}</div><div class="metric">29C 3.3V</div>`;
+        }
+        preview.innerHTML = `<div class="preset-calendar ${layoutClass}">${calendarMini}<div class="right">${right}</div></div>`;
+      } else {
+        const heading = selectedLayout === 4 ? 'BLOCK' : selectedLayout === 5 ? 'SEGMENT' : selectedLayout === 8 ? 'CLASSIC' : 'CLOCK';
+        preview.innerHTML = `<div class="preset-preview"><div class="preset-header"><span>${heading} ${shortDate}</span><span>3.3V</span></div><div class="preset-time">${time}</div><div class="preset-footer"><span>${shortDate}</span><span>29C</span></div></div>`;
+      }
+    }
+
+    async function connect() {
+      if (!navigator.bluetooth) {
+        setStatus('err', 'Web Bluetooth unavailable');
+        log('Web Bluetooth unavailable');
+        return;
+      }
+
+      device = await navigator.bluetooth.requestDevice({
+        filters: [{ name: DEVICE_NAME }],
+        optionalServices: [SERVICE_UUID]
+      });
+      manualDisconnect = false;
+      autoReconnect = true;
+      device.addEventListener('gattserverdisconnected', () => {
+        characteristic = null;
+        flashDumpCharacteristic = null;
+        safeOtaSupported = false;
+        firmwareCompatible = false;
+        fwVersionLabel.textContent = 'chưa kết nối';
+        setStatus('', 'Disconnected');
+        log('Disconnected');
+        if (autoReconnect && !manualDisconnect && !flashWriteActive) {
+          scheduleReconnect();
+        }
+      });
+      await reconnect();
+    }
+
+    async function reconnect() {
+      if (!device) {
+        await connect();
+        return;
+      }
+      manualDisconnect = false;
+      autoReconnect = true;
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService(SERVICE_UUID);
+
+      // Log the live GATT database. This distinguishes a stale/other firmware
+      // from a UUID typo without accidentally writing the config to another value.
+      const characteristics = await service.getCharacteristics();
+      const available = characteristics.map(item => {
+        const properties = Object.entries(item.properties)
+          .filter(([, enabled]) => enabled)
+          .map(([name]) => name)
+          .join(',');
+        return `${item.uuid} (${properties})`;
+      });
+      log(`Characteristics: ${available.join(' | ') || 'none'}`);
+
+      characteristic = characteristics.find(item => item.uuid.toLowerCase() === CONTROL_UUID);
+      flashDumpCharacteristic = characteristics.find(item => item.uuid.toLowerCase() === FLASH_DUMP_UUID) || null;
+      safeOtaSupported = !flashDumpCharacteristic;
+      firmwareCompatible = safeOtaSupported;
+      if (!characteristic) {
+        setStatus('err', 'Firmware/GATT mismatch');
+        throw new Error(`Control Point ${CONTROL_UUID} is absent. Rebuild/flash ble_app_epd_tag, reset the board, then remove and scan the BLE device again.`);
+      }
+      setStatus('on', device.name || 'Connected');
+      log(`Connected: ${device.name || device.id}`);
+      fwVersionLabel.textContent = firmwareCompatible ? FW_PROTOCOL_VERSION : 'FW cũ / legacy';
+      log(`Expected firmware protocol: ${FW_PROTOCOL_VERSION}`);
+      log(flashDumpCharacteristic ? 'Legacy flash-writer firmware detected. Safe OTA is blocked on this page.' : 'Safe OTA characteristic set detected.');
+      if (!firmwareCompatible) {
+        showFirmwareUpdateRequired('các layout và widget mới');
+      }
+      try {
+        await syncTimeOnly();
+      } catch (error) {
+        log(`Time sync skipped: ${error.message}`);
+      }
+    }
+
+    function scheduleReconnect() {
+      if (!device || reconnecting) return;
+      reconnecting = true;
+      setTimeout(async () => {
+        try {
+          log('Auto reconnecting...');
+          await reconnect();
+        } catch (error) {
+          log(`Auto reconnect failed: ${error.message}`);
+          setTimeout(() => { reconnecting = false; scheduleReconnect(); }, 2000);
+          return;
+        }
+        reconnecting = false;
+      }, 8000);
+    }
+
+    function disconnect() {
+      manualDisconnect = true;
+      autoReconnect = false;
+      if (device && device.gatt.connected) {
+        device.gatt.disconnect();
+      }
+    }
+
+    async function syncTimeOnly() {
+      if (!characteristic || !device || !device.gatt.connected) {
+        throw new Error('BLE tag is not connected.');
+      }
+      const date = new Date();
+      dateTimeInput.value = toLocalInputValue(date);
+      updatePreview();
+      const packet = buildTimePacket(date);
+      if (characteristic.writeValueWithResponse) {
+        await characteristic.writeValueWithResponse(packet);
+      } else {
+        await characteristic.writeValue(packet);
+      }
+      log(`Time synchronized: ${date.toLocaleTimeString()}`);
+    }
+
+    async function sendConfig(useCurrentTime = false) {
+      imagePreviewActive = false;
+      if (!characteristic || !device || !device.gatt.connected) {
+        throw new Error('Scan and connect the BLE tag before synchronizing.');
+      }
+      if (!requireCompatibleFirmware('đồng bộ layout mới')) {
+        return;
+      }
+      const date = useCurrentTime
+        ? new Date(Date.now() + (SYNC_LEAD_SECONDS * 1000))
+        : dateFromInput();
+      if (useCurrentTime) {
+        dateTimeInput.value = toLocalInputValue(date);
+      }
+      updatePreview();
+      const packet = buildConfigPacket(selectedLayout, date);
+      const lunarPacket = buildLunarPacket(date);
+      if (characteristic.writeValueWithResponse) {
+        await characteristic.writeValueWithResponse(lunarPacket.packet);
+      } else {
+        await characteristic.writeValue(lunarPacket.packet);
+      }
+      log(`Lunar ${String(lunarPacket.lunar.day).padStart(2, '0')}/${String(lunarPacket.lunar.month).padStart(2, '0')}${lunarPacket.lunar.leap ? ' leap' : ''}`);
+      if (selectedLayout === 3) {
+        const extensionPacket = buildCustomExtensionPacket();
+        if (characteristic.writeValueWithResponse) {
+          await characteristic.writeValueWithResponse(extensionPacket);
+        } else {
+          await characteristic.writeValue(extensionPacket);
+        }
+        log(`TX ${hex(extensionPacket)}`);
+      }
+      if (characteristic.writeValueWithResponse) {
+        await characteristic.writeValueWithResponse(packet);
+      } else {
+        await characteristic.writeValue(packet);
+      }
+      log(`TX ${hex(packet)}`);
+      log('Firmware will disconnect, then refresh the display');
+    }
+
+    async function sendImage() {
+      if (!imageSource) {
+        throw new Error('Choose an image before uploading.');
+      }
+      if (!characteristic || !device || !device.gatt.connected) {
+        throw new Error('Scan and connect the BLE tag before uploading an image.');
+      }
+      if (!requireCompatibleFirmware('gửi ảnh lên màn')) {
+        return;
+      }
+
+      const frame = buildImageFrame();
+      const chunkSize = 12;
+      const chunks = frame.length / chunkSize;
+      setImageProgress(0);
+      imagePreviewActive = true;
+      updatePreview();
+
+      for (let offset = 0; offset < frame.length; offset += chunkSize) {
+        const packet = new Uint8Array(20);
+        packet[0] = 0x45;
+        packet[1] = 0x50;
+        packet[2] = 0x44;
+        packet[3] = 0x33;
+        packet[4] = 0x03;
+        packet[5] = offset & 0xff;
+        packet[6] = (offset >> 8) & 0xff;
+        packet.set(frame.subarray(offset, offset + chunkSize), 7);
+        packet[19] = packet.slice(0, 19).reduce((sum, value) => (sum + value) & 0xff, 0);
+        if (characteristic.writeValueWithResponse) {
+          await characteristic.writeValueWithResponse(packet);
+        } else {
+          await characteristic.writeValue(packet);
+        }
+        const chunkIndex = (offset / chunkSize) + 1;
+        if ((chunkIndex % 8 === 0) || (chunkIndex === chunks)) {
+          setImageProgress(Math.round((chunkIndex * 100) / chunks));
+        }
+      }
+
+      const commit = new Uint8Array(20);
+      commit[0] = 0x45;
+      commit[1] = 0x50;
+      commit[2] = 0x44;
+      commit[3] = 0x34;
+      commit[4] = 0x04;
+      commit[5] = frame.length & 0xff;
+      commit[6] = (frame.length >> 8) & 0xff;
+      commit[19] = commit.slice(0, 19).reduce((sum, value) => (sum + value) & 0xff, 0);
+      if (characteristic.writeValueWithResponse) {
+        await characteristic.writeValueWithResponse(commit);
+      } else {
+        await characteristic.writeValue(commit);
+      }
+      log(`Image uploaded: ${frame.length} bytes. Firmware will disconnect, then refresh.`);
+    }
+
+    document.getElementById('connectBtn').addEventListener('click', () => connect().catch(err => log(err.message)));
+    document.getElementById('reconnectBtn').addEventListener('click', () => reconnect().catch(err => log(err.message)));
+    document.getElementById('disconnectBtn').addEventListener('click', disconnect);
+    fwUpdateCloseBtn.addEventListener('click', () => fwUpdateModal.classList.remove('open'));
+    fwUpdateModal.addEventListener('click', event => {
+      if (event.target === fwUpdateModal) {
+        fwUpdateModal.classList.remove('open');
+      }
+    });
+    window.addEventListener('pagehide', disconnect);
+    window.addEventListener('beforeunload', disconnect);
+    document.getElementById('sendBtn').addEventListener('click', () => sendConfig(true).catch(err => {
+      setStatus('err', 'Send failed');
+      log(err.message);
+    }));
+    document.getElementById('layoutPicker').addEventListener('click', event => {
+      const button = event.target.closest('button[data-layout]');
+      if (!button) return;
+      selectedLayout = Number(button.dataset.layout);
+      document.querySelectorAll('#layoutPicker button').forEach(item => item.classList.toggle('active', item === button));
+      setCustomPanelVisible();
+      imagePreviewActive = false;
+      updatePreview();
+    });
+    document.getElementById('orientationPicker').addEventListener('click', event => {
+      const button = event.target.closest('button[data-orientation]');
+      if (!button) return;
+      setOrientation(button.dataset.orientation);
+      imagePreviewActive = false;
+      updatePreview();
+    });
+    document.getElementById('rotatePreviewBtn').addEventListener('click', () => {
+      previewRotated = !previewRotated;
+      document.getElementById('rotatePreviewBtn').classList.toggle('active', previewRotated);
+      imagePreviewActive = false;
+      updatePreview();
+    });
+    document.getElementById('customPresets').addEventListener('click', event => {
+      const button = event.target.closest('button[data-preset]');
+      if (!button) return;
+      selectedLayout = 3;
+      document.querySelectorAll('#layoutPicker button').forEach(item => item.classList.toggle('active', Number(item.dataset.layout) === 3));
+      setCustomPanelVisible();
+      applyCustomPreset(button.dataset.preset);
+    });
+    fontSelect.addEventListener('change', () => {
+      selectedFont = Number(fontSelect.value);
+      updatePreview();
+    });
+    document.getElementById('widgetToggles').addEventListener('change', () => {
+      updateCustomFromControls();
+      updatePreview();
+    });
+    document.getElementById('extensionToggles').addEventListener('change', () => {
+      updateCustomExtensionFromControls();
+      updatePreview();
+    });
+    timeScaleSelect.addEventListener('change', () => {
+      updateCustomFromControls();
+      updatePreview();
+    });
+    infoScaleSelect.addEventListener('change', () => {
+      updateCustomFromControls();
+      updatePreview();
+    });
+    calendarStyleSelect.addEventListener('change', () => {
+      updateCustomExtensionFromControls();
+      updatePreview();
+    });
+    document.getElementById('applyCustomBtn').addEventListener('click', () => {
+      updateCustomFromControls();
+      updateCustomExtensionFromControls();
+      updatePreview();
+    });
+    imageInput.addEventListener('change', () => {
+      const [file] = imageInput.files;
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const image = new Image();
+        image.onload = () => {
+          imageSource = image;
+          imagePreviewActive = true;
+          setImageProgress(0);
+          updatePreview();
+          log(`Loaded image: ${file.name}`);
+        };
+        image.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+    const updateImagePreview = () => {
+      imageZoomValue.textContent = `${imageZoom.value}%`;
+      imageOffsetXValue.textContent = imageOffsetX.value;
+      imageOffsetYValue.textContent = imageOffsetY.value;
+      if (imageSource) {
+        imagePreviewActive = true;
+        updatePreview();
+      }
+    };
+    imageFitMode.addEventListener('change', updateImagePreview);
+    imageZoom.addEventListener('input', updateImagePreview);
+    imageOffsetX.addEventListener('input', updateImagePreview);
+    imageOffsetY.addEventListener('input', updateImagePreview);
+    document.getElementById('previewImageBtn').addEventListener('click', updateImagePreview);
+    document.getElementById('uploadImageBtn').addEventListener('click', () => sendImage().catch(err => {
+      setStatus('err', 'Image upload failed');
+      log(err.message);
+    }));
+    checkFwUpdateBtn.addEventListener('click', () => fetchFirmwareManifest().catch(err => {
+      setStatus('err', 'Update check failed');
+      updateFirmwareStatus(err.message);
+      log(err.message);
+    }));
+    flashWriteBtn.addEventListener('click', () => programExternalFlash().catch(err => {
+      flashWriteActive = false;
+      autoReconnect = true;
+      flashWriteBtn.disabled = false;
+      setStatus('err', 'Flash program failed');
+      updateFirmwareStatus(err.message);
+      log(err.message);
+    }));
+    preview.addEventListener('pointerdown', event => {
+      const target = event.target.closest('[data-drag-widget]');
+      if (!target || selectedLayout !== 3) return;
+      dragWidget = target.dataset.dragWidget;
+      target.setPointerCapture(event.pointerId);
+    });
+    preview.addEventListener('pointermove', event => {
+      if (!dragWidget) return;
+      const rect = preview.getBoundingClientRect();
+      const x = Math.max(0, Math.min(15, Math.round(((event.clientX - rect.left) / rect.width) * 15)));
+      const y = Math.max(0, Math.min(15, Math.round(((event.clientY - rect.top) / rect.height) * 15)));
+      if (dragWidget === 'calendar') {
+        customExtension.calendarPos = (x << 4) | y;
+      } else if (dragWidget === 'hline') {
+        customExtension.horizontalY = y;
+      } else if (dragWidget === 'vline') {
+        customExtension.verticalX = x;
+      } else {
+        custom[`${dragWidget}Pos`] = (x << 4) | y;
+      }
+      updatePreview();
+    });
+    preview.addEventListener('pointerup', () => { dragWidget = null; });
+    dateTimeInput.addEventListener('input', updatePreview);
+
+    dateTimeInput.value = toLocalInputValue(new Date());
+    webVersionLabel.textContent = `EPD Web v${WEB_VERSION}`;
+    setOrientation('landscape');
+    setCustomPanelVisible();
+    updatePreview();
+    fetchFirmwareManifest().catch(error => {
+      updateFirmwareStatus(error.message);
+      log(`Update check skipped: ${error.message}`);
+    });
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(updatePreview);
+    }
+  </script>
+</body>
+</html>

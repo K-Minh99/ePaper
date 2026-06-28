@@ -1,0 +1,12 @@
+{
+  "version": "0.3.8",
+  "protocol": "EPD FW protocol v0.3.1",
+  "released": "2026-06-28",
+  "notes": "Cap nhat font va layout, ho tro OTA an toan qua BLE.",
+  "image": {
+    "url": "epd_tag_slot_b.img",
+    "name": "epd_tag_slot_b.img",
+    "size": 58908,
+    "sha256": "65877AA1BD1B817AFCDD0784628941BDE4577DD588E9DD78F897590DC6F27F56"
+  }
+}
