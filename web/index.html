@@ -165,6 +165,58 @@
       gap: 8px;
     }
 
+    .custom-editor {
+      display: grid;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(15, 23, 42, .18);
+    }
+
+    .custom-editor-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .custom-grid-toggle {
+      min-height: 38px;
+      white-space: nowrap;
+    }
+
+    .custom-tool-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .custom-tool-grid button,
+    .nudge-pad button {
+      min-height: 34px;
+      text-align: center;
+      padding: 6px 8px;
+    }
+
+    .nudge-pad {
+      display: grid;
+      grid-template-columns: repeat(3, 40px);
+      grid-template-rows: repeat(3, 34px);
+      gap: 5px;
+      justify-content: center;
+    }
+
+    .nudge-pad button[data-nudge="up"] { grid-column: 2; grid-row: 1; }
+    .nudge-pad button[data-nudge="left"] { grid-column: 1; grid-row: 2; }
+    .nudge-pad button[data-nudge="center"] { grid-column: 2; grid-row: 2; }
+    .nudge-pad button[data-nudge="right"] { grid-column: 3; grid-row: 2; }
+    .nudge-pad button[data-nudge="down"] { grid-column: 2; grid-row: 3; }
+
+    .custom-help.compact {
+      padding: 6px 8px;
+    }
+
     .widget-toggle {
       display: flex;
       align-items: center;
@@ -382,6 +434,14 @@
       cursor: grabbing;
     }
 
+    .custom-preview-widget.selected,
+    .custom-preview-calendar.selected,
+    .custom-divider.selected {
+      outline: 2px solid #22d3ee;
+      outline-offset: 1px;
+      box-shadow: 0 0 0 2px rgba(34, 211, 238, .18);
+    }
+
     .custom-preview-widget.time {
       font-size: var(--widget-font);
     }
@@ -464,6 +524,23 @@
     .custom-divider.vertical {
       width: 0.47cqw;
       height: 100%;
+    }
+
+    .custom-grid-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(to right, rgba(34, 211, 238, .16) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(34, 211, 238, .16) 1px, transparent 1px);
+      background-size: calc(100% / 15) calc(100% / 15);
+      z-index: 0;
+    }
+
+    .custom-preview-widget,
+    .custom-preview-calendar,
+    .custom-divider {
+      z-index: 1;
     }
 
     .calendar-preview {
@@ -1049,6 +1126,49 @@
             <button type="button" data-preset="calendar">Calendar split</button>
             <button type="button" data-preset="portrait">Doc thong tin</button>
           </div>
+          <div class="custom-editor">
+            <div class="custom-editor-head">
+              <label class="field">Đối tượng đang chỉnh
+                <select id="customTargetSelect">
+                  <option value="time">Giờ phút</option>
+                  <option value="date">Ngày / thứ</option>
+                  <option value="metrics">Nhiệt độ / pin</option>
+                  <option value="calendar">Lịch tháng</option>
+                  <option value="hline">Đường ngang</option>
+                  <option value="vline">Đường dọc</option>
+                </select>
+              </label>
+              <label class="widget-toggle custom-grid-toggle"><input id="customGridToggle" type="checkbox" checked>Hiện lưới</label>
+            </div>
+            <label class="range-field">X
+              <input id="customX" type="range" min="0" max="15" value="5">
+              <output id="customXValue">5</output>
+            </label>
+            <label class="range-field">Y
+              <input id="customY" type="range" min="0" max="15" value="2">
+              <output id="customYValue">2</output>
+            </label>
+            <div class="row">
+              <div class="nudge-pad" id="customNudgePad" aria-label="Dịch vị trí">
+                <button type="button" data-nudge="up">↑</button>
+                <button type="button" data-nudge="left">←</button>
+                <button type="button" data-nudge="center">•</button>
+                <button type="button" data-nudge="right">→</button>
+                <button type="button" data-nudge="down">↓</button>
+              </div>
+              <div class="stack" style="flex:1;min-width:180px">
+                <div class="custom-tool-grid" id="customAlignTools">
+                  <button type="button" data-align="left">Trái</button>
+                  <button type="button" data-align="center-x">Giữa X</button>
+                  <button type="button" data-align="right">Phải</button>
+                  <button type="button" data-align="top">Trên</button>
+                  <button type="button" data-align="center-y">Giữa Y</button>
+                  <button type="button" data-align="bottom">Dưới</button>
+                </div>
+                <div id="customTargetHint" class="custom-help compact">Có thể kéo trực tiếp đối tượng trên preview hoặc chỉnh X/Y ở đây.</div>
+              </div>
+            </div>
+          </div>
           <div class="widget-grid" id="widgetToggles">
             <label class="widget-toggle"><input type="checkbox" data-widget="time" checked>Time</label>
             <label class="widget-toggle"><input type="checkbox" data-widget="date" checked>Date</label>
@@ -1222,6 +1342,8 @@
       verticalX: 8
     };
     let dragWidget = null;
+    let selectedCustomTarget = 'time';
+    let customGridVisible = true;
     let imageSource = null;
     let imagePreviewActive = false;
 
@@ -1237,6 +1359,13 @@
     const timeScaleSelect = document.getElementById('customTimeScale');
     const infoScaleSelect = document.getElementById('customInfoScale');
     const calendarStyleSelect = document.getElementById('calendarStyle');
+    const customTargetSelect = document.getElementById('customTargetSelect');
+    const customX = document.getElementById('customX');
+    const customY = document.getElementById('customY');
+    const customXValue = document.getElementById('customXValue');
+    const customYValue = document.getElementById('customYValue');
+    const customGridToggle = document.getElementById('customGridToggle');
+    const customTargetHint = document.getElementById('customTargetHint');
     const imageInput = document.getElementById('imageInput');
     const imageFitMode = document.getElementById('imageFitMode');
     const imageZoom = document.getElementById('imageZoom');
@@ -1684,6 +1813,112 @@
       if (input) input.checked = checked;
     }
 
+    function clampGrid(value) {
+      return Math.max(0, Math.min(15, Number(value) || 0));
+    }
+
+    function selectedCustomPosition() {
+      if (selectedCustomTarget === 'calendar') return customExtension.calendarPos;
+      if (selectedCustomTarget === 'hline') return (8 << 4) | customExtension.horizontalY;
+      if (selectedCustomTarget === 'vline') return (customExtension.verticalX << 4) | 8;
+      if (selectedCustomTarget === 'metrics') return custom.metricsPos;
+      if (selectedCustomTarget === 'date') return custom.datePos;
+      return custom.timePos;
+    }
+
+    function enableCustomTarget(target) {
+      if (target === 'time') custom.widgets |= 0x01;
+      else if (target === 'date') custom.widgets |= 0x06;
+      else if (target === 'metrics') custom.widgets |= 0x18;
+      else if (target === 'calendar') customExtension.widgets |= 0x01;
+      else if (target === 'hline') customExtension.lineFlags |= 0x01;
+      else if (target === 'vline') customExtension.lineFlags |= 0x02;
+      setCheckbox('#widgetToggles input[data-widget="time"]', !!(custom.widgets & 0x01));
+      setCheckbox('#widgetToggles input[data-widget="date"]', !!(custom.widgets & 0x02));
+      setCheckbox('#widgetToggles input[data-widget="weekday"]', !!(custom.widgets & 0x04));
+      setCheckbox('#widgetToggles input[data-widget="temp"]', !!(custom.widgets & 0x08));
+      setCheckbox('#widgetToggles input[data-widget="battery"]', !!(custom.widgets & 0x10));
+      setCheckbox('#widgetToggles input[data-widget="border"]', !!(custom.widgets & 0x20));
+      setCheckbox('#extensionToggles input[data-extension="calendar"]', !!(customExtension.widgets & 0x01));
+      setCheckbox('#extensionToggles input[data-extension="horizontal"]', !!(customExtension.lineFlags & 0x01));
+      setCheckbox('#extensionToggles input[data-extension="vertical"]', !!(customExtension.lineFlags & 0x02));
+    }
+
+    function setCustomTargetPosition(target, x, y) {
+      const safeX = clampGrid(x);
+      const safeY = clampGrid(y);
+      enableCustomTarget(target);
+      if (target === 'calendar') customExtension.calendarPos = (safeX << 4) | safeY;
+      else if (target === 'hline') customExtension.horizontalY = safeY;
+      else if (target === 'vline') customExtension.verticalX = safeX;
+      else if (target === 'metrics') custom.metricsPos = (safeX << 4) | safeY;
+      else if (target === 'date') custom.datePos = (safeX << 4) | safeY;
+      else custom.timePos = (safeX << 4) | safeY;
+    }
+
+    function customTargetLabel(target) {
+      return {
+        time: 'Giờ phút',
+        date: 'Ngày / thứ',
+        metrics: 'Nhiệt độ / pin',
+        calendar: 'Lịch tháng',
+        hline: 'Đường ngang',
+        vline: 'Đường dọc'
+      }[target] || 'Đối tượng';
+    }
+
+    function syncCustomEditorControls() {
+      const position = selectedCustomPosition();
+      const x = (position >> 4) & 0x0f;
+      const y = position & 0x0f;
+      customTargetSelect.value = selectedCustomTarget;
+      customX.value = x;
+      customY.value = y;
+      customXValue.textContent = selectedCustomTarget === 'hline' ? '-' : String(x);
+      customYValue.textContent = selectedCustomTarget === 'vline' ? '-' : String(y);
+      customX.disabled = selectedCustomTarget === 'hline';
+      customY.disabled = selectedCustomTarget === 'vline';
+      customGridToggle.checked = customGridVisible;
+      customTargetHint.textContent = `${customTargetLabel(selectedCustomTarget)}: kéo trên preview, chỉnh X/Y hoặc dùng nút căn vị trí.`;
+    }
+
+    function setSelectedCustomTarget(target) {
+      selectedCustomTarget = target || 'time';
+      enableCustomTarget(selectedCustomTarget);
+      syncCustomEditorControls();
+      updatePreview();
+    }
+
+    function updateSelectedCustomFromSliders() {
+      setCustomTargetPosition(selectedCustomTarget, customX.value, customY.value);
+      syncCustomEditorControls();
+      updatePreview();
+    }
+
+    function nudgeSelectedCustom(dx, dy) {
+      const position = selectedCustomPosition();
+      const x = ((position >> 4) & 0x0f) + dx;
+      const y = (position & 0x0f) + dy;
+      setCustomTargetPosition(selectedCustomTarget, x, y);
+      syncCustomEditorControls();
+      updatePreview();
+    }
+
+    function alignSelectedCustom(mode) {
+      const position = selectedCustomPosition();
+      let x = (position >> 4) & 0x0f;
+      let y = position & 0x0f;
+      if (mode === 'left') x = 0;
+      else if (mode === 'center-x') x = 8;
+      else if (mode === 'right') x = 15;
+      else if (mode === 'top') y = 0;
+      else if (mode === 'center-y') y = 8;
+      else if (mode === 'bottom') y = 15;
+      setCustomTargetPosition(selectedCustomTarget, x, y);
+      syncCustomEditorControls();
+      updatePreview();
+    }
+
     function applyCustomPreset(name) {
       if (name === 'status') {
         setOrientation('landscape');
@@ -1746,6 +1981,7 @@
       document.querySelectorAll('#layoutPicker button').forEach(item => {
         item.classList.toggle('active', Number(item.dataset.layout) === selectedLayout);
       });
+      syncCustomEditorControls();
       updatePreview();
     }
 
@@ -2465,14 +2701,15 @@
         const timeLogicalHeight = 7 * ((custom.style & 0x03) + 2);
         const infoLogicalHeight = 7 * ((custom.style & 0x04) ? 2 : 1);
         const widgets = [];
-        if (custom.widgets & 0x01) widgets.push(`<div class="custom-preview-widget time" data-drag-widget="time" style="${positionStyle(custom.timePos)}--widget-font:${logicalFontSize(timeLogicalHeight)}">${time}</div>`);
-        if (custom.widgets & 0x02) widgets.push(`<div class="custom-preview-widget info" data-drag-widget="date" style="${positionStyle(custom.datePos)}--widget-font:${logicalFontSize(infoLogicalHeight)}">${shortDate}</div>`);
-        if (custom.widgets & 0x04) widgets.push(`<div class="custom-preview-widget info" data-drag-widget="date" style="left:${(((custom.datePos >> 4) & 0x0f) / 15) * 100}%;top:${(((custom.datePos & 0x0f) / 15) * 100) + 8}%;--widget-font:${logicalFontSize(infoLogicalHeight)}">${weekday}</div>`);
-        if (info) widgets.push(`<div class="custom-preview-widget info" data-drag-widget="metrics" style="${positionStyle(custom.metricsPos)}--widget-font:${logicalFontSize(infoLogicalHeight)}">${info}</div>`);
-        if (customExtension.widgets & 0x01) widgets.push(`<div class="custom-preview-calendar" data-drag-widget="calendar" style="${positionStyle(customExtension.calendarPos)}"><div class="custom-calendar-head" ${customExtension.calendarStyle & 0x01 ? 'hidden' : ''}>${labels.map(label => `<span>${label}</span>`).join('')}</div><div class="custom-calendar-days">${cells}</div></div>`);
-        if (customExtension.lineFlags & 0x01) widgets.push(`<div class="custom-divider horizontal" data-drag-widget="hline" style="top:${(customExtension.horizontalY / 15) * 100}%"></div>`);
-        if (customExtension.lineFlags & 0x02) widgets.push(`<div class="custom-divider vertical" data-drag-widget="vline" style="left:${(customExtension.verticalX / 15) * 100}%"></div>`);
-        preview.innerHTML = `${custom.widgets & 0x20 ? '<div class="calendar-preview" style="position:absolute;inset:0;border:1px solid #111"></div>' : ''}${widgets.join('')}`;
+        const selectedClass = target => target === selectedCustomTarget ? ' selected' : '';
+        if (custom.widgets & 0x01) widgets.push(`<div class="custom-preview-widget time${selectedClass('time')}" data-drag-widget="time" style="${positionStyle(custom.timePos)}--widget-font:${logicalFontSize(timeLogicalHeight)}">${time}</div>`);
+        if (custom.widgets & 0x02) widgets.push(`<div class="custom-preview-widget info${selectedClass('date')}" data-drag-widget="date" style="${positionStyle(custom.datePos)}--widget-font:${logicalFontSize(infoLogicalHeight)}">${shortDate}</div>`);
+        if (custom.widgets & 0x04) widgets.push(`<div class="custom-preview-widget info${selectedClass('date')}" data-drag-widget="date" style="left:${(((custom.datePos >> 4) & 0x0f) / 15) * 100}%;top:${(((custom.datePos & 0x0f) / 15) * 100) + 8}%;--widget-font:${logicalFontSize(infoLogicalHeight)}">${weekday}</div>`);
+        if (info) widgets.push(`<div class="custom-preview-widget info${selectedClass('metrics')}" data-drag-widget="metrics" style="${positionStyle(custom.metricsPos)}--widget-font:${logicalFontSize(infoLogicalHeight)}">${info}</div>`);
+        if (customExtension.widgets & 0x01) widgets.push(`<div class="custom-preview-calendar${selectedClass('calendar')}" data-drag-widget="calendar" style="${positionStyle(customExtension.calendarPos)}"><div class="custom-calendar-head" ${customExtension.calendarStyle & 0x01 ? 'hidden' : ''}>${labels.map(label => `<span>${label}</span>`).join('')}</div><div class="custom-calendar-days">${cells}</div></div>`);
+        if (customExtension.lineFlags & 0x01) widgets.push(`<div class="custom-divider horizontal${selectedClass('hline')}" data-drag-widget="hline" style="top:${(customExtension.horizontalY / 15) * 100}%"></div>`);
+        if (customExtension.lineFlags & 0x02) widgets.push(`<div class="custom-divider vertical${selectedClass('vline')}" data-drag-widget="vline" style="left:${(customExtension.verticalX / 15) * 100}%"></div>`);
+        preview.innerHTML = `${customGridVisible ? '<div class="custom-grid-overlay"></div>' : ''}${custom.widgets & 0x20 ? '<div class="calendar-preview" style="position:absolute;inset:0;border:1px solid #111"></div>' : ''}${widgets.join('')}`;
       } else if (selectedLayout === 11) {
         const calendar = calendarPreviewData(date);
         preview.innerHTML = `<div class="full-month-preview"><div class="head">${calendar.labels.map(label => `<span>${label}</span>`).join('')}</div><div class="days">${calendar.cells}</div></div>`;
@@ -2764,10 +3001,12 @@
     });
     document.getElementById('widgetToggles').addEventListener('change', () => {
       updateCustomFromControls();
+      syncCustomEditorControls();
       updatePreview();
     });
     document.getElementById('extensionToggles').addEventListener('change', () => {
       updateCustomExtensionFromControls();
+      syncCustomEditorControls();
       updatePreview();
     });
     timeScaleSelect.addEventListener('change', () => {
@@ -2782,9 +3021,43 @@
       updateCustomExtensionFromControls();
       updatePreview();
     });
+    customTargetSelect.addEventListener('change', () => {
+      setSelectedCustomTarget(customTargetSelect.value);
+    });
+    customX.addEventListener('input', updateSelectedCustomFromSliders);
+    customY.addEventListener('input', updateSelectedCustomFromSliders);
+    customGridToggle.addEventListener('change', () => {
+      customGridVisible = customGridToggle.checked;
+      updatePreview();
+    });
+    document.getElementById('customNudgePad').addEventListener('click', event => {
+      const button = event.target.closest('button[data-nudge]');
+      if (!button) return;
+      const moves = {
+        up: [0, -1],
+        down: [0, 1],
+        left: [-1, 0],
+        right: [1, 0],
+        center: [0, 0]
+      };
+      if (button.dataset.nudge === 'center') {
+        setCustomTargetPosition(selectedCustomTarget, 8, 8);
+        syncCustomEditorControls();
+        updatePreview();
+        return;
+      }
+      const [dx, dy] = moves[button.dataset.nudge] || [0, 0];
+      nudgeSelectedCustom(dx, dy);
+    });
+    document.getElementById('customAlignTools').addEventListener('click', event => {
+      const button = event.target.closest('button[data-align]');
+      if (!button) return;
+      alignSelectedCustom(button.dataset.align);
+    });
     document.getElementById('applyCustomBtn').addEventListener('click', () => {
       updateCustomFromControls();
       updateCustomExtensionFromControls();
+      syncCustomEditorControls();
       updatePreview();
     });
     imageInput.addEventListener('change', () => {
@@ -2839,6 +3112,9 @@
       const target = event.target.closest('[data-drag-widget]');
       if (!target || selectedLayout !== 3) return;
       dragWidget = target.dataset.dragWidget;
+      selectedCustomTarget = dragWidget;
+      syncCustomEditorControls();
+      updatePreview();
       target.setPointerCapture(event.pointerId);
     });
     preview.addEventListener('pointermove', event => {
@@ -2855,6 +3131,7 @@
       } else {
         custom[`${dragWidget}Pos`] = (x << 4) | y;
       }
+      syncCustomEditorControls();
       updatePreview();
     });
     preview.addEventListener('pointerup', () => { dragWidget = null; });
@@ -2864,6 +3141,7 @@
     webVersionLabel.textContent = `EPD Web v${WEB_VERSION}`;
     setOrientation('landscape');
     setCustomPanelVisible();
+    syncCustomEditorControls();
     updatePreview();
     fetchFirmwareManifest().catch(error => {
       updateFirmwareStatus(error.message);
