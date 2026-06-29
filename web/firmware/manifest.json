@@ -1,0 +1,12 @@
+{
+  "version": "0.3.9",
+  "protocol": "EPD FW protocol v0.3.2",
+  "released": "2026-06-29",
+  "notes": "Them duong custom co the xoay va chinh do dai.",
+  "image": {
+    "url": "epd_tag_slot_b.img",
+    "name": "epd_tag_slot_b.img",
+    "size": 59160,
+    "sha256": "FEE47FB2A68843FB8C463C85305FD4947AE7C1E8F5A6FC846D80BDBD5C0D1A9B"
+  }
+}
