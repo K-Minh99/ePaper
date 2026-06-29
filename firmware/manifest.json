@@ -1,12 +1,27 @@
 {
-  "version": "0.3.8",
-  "protocol": "EPD FW protocol v0.3.1",
-  "released": "2026-06-28",
-  "notes": "Cap nhat font va layout, ho tro OTA an toan qua BLE.",
+  "version": "0.3.10",
+  "protocol": "EPD FW protocol v0.3.2",
+  "released": "2026-06-29",
+  "notes": "Add board type marker and separate OTA images for type 1/type 2 hardware.",
   "image": {
-    "url": "epd_tag_slot_b.img",
-    "name": "epd_tag_slot_b.img",
-    "size": 58908,
-    "sha256": "65877AA1BD1B817AFCDD0784628941BDE4577DD588E9DD78F897590DC6F27F56"
+    "url": "epd_tag_slot_b_type1.img",
+    "name": "epd_tag_slot_b_type1.img",
+    "board_type": 1,
+    "size": 59140,
+    "sha256": "ED97D20A2B6BBCB821B482F7A53BD3941788300AEA4BCD07242E9F97507F9F11"
+  },
+  "image_type1": {
+    "url": "epd_tag_slot_b_type1.img",
+    "name": "epd_tag_slot_b_type1.img",
+    "board_type": 1,
+    "size": 59140,
+    "sha256": "ED97D20A2B6BBCB821B482F7A53BD3941788300AEA4BCD07242E9F97507F9F11"
+  },
+  "image_type2": {
+    "url": "epd_tag_slot_b_type2.img",
+    "name": "epd_tag_slot_b_type2.img",
+    "board_type": 2,
+    "size": 59144,
+    "sha256": "21877EF983851850285A81481595F045E194E67D852D66975DB11BD7E4028581"
   }
 }
