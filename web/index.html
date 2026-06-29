@@ -1148,6 +1148,20 @@
               <input id="customY" type="range" min="0" max="15" value="2">
               <output id="customYValue">2</output>
             </label>
+            <div id="customLineOptions" class="stack" hidden>
+              <div class="row">
+                <button id="customLineRotateBtn" type="button">Xoay duong</button>
+                <span id="customLineOrientationLabel" class="version-pill">Ngang</span>
+              </div>
+              <label class="range-field">Dau
+                <input id="customLineStart" type="range" min="0" max="15" value="0">
+                <output id="customLineStartValue">0</output>
+              </label>
+              <label class="range-field">Cuoi
+                <input id="customLineEnd" type="range" min="0" max="15" value="15">
+                <output id="customLineEndValue">15</output>
+              </label>
+            </div>
             <div class="row">
               <div class="nudge-pad" id="customNudgePad" aria-label="Dịch vị trí">
                 <button type="button" data-nudge="up">↑</button>
@@ -1305,8 +1319,8 @@
     const SERVICE_UUID = '18424398-7cbc-11e9-8f9e-2a86e4085a59';
     const CONTROL_UUID = '2d86686a-53dc-25b3-0c4a-f0e10c8dee20';
     const FLASH_DUMP_UUID = '2f86686a-53dc-25b3-0c4a-f0e10c8dee20';
-    const WEB_VERSION = '0.3.8';
-    const FW_PROTOCOL_VERSION = 'EPD FW protocol v0.3.1';
+    const WEB_VERSION = '0.3.9';
+    const FW_PROTOCOL_VERSION = 'EPD FW protocol v0.3.2';
     const UPDATE_MANIFEST_URL = 'https://k-minh99.github.io/ePaper/firmware/manifest.json';
     const SLOT_IMAGE_MAX_BYTES = 0x12000;
     const DEVICE_NAME = 'DLG-PRPH';
@@ -1339,7 +1353,11 @@
       calendarStyle: 0x00,
       lineFlags: 0x00,
       horizontalY: 8,
-      verticalX: 8
+      verticalX: 8,
+      line1Start: 0,
+      line1End: 15,
+      line2Start: 0,
+      line2End: 15
     };
     let dragWidget = null;
     let selectedCustomTarget = 'time';
@@ -1366,6 +1384,13 @@
     const customYValue = document.getElementById('customYValue');
     const customGridToggle = document.getElementById('customGridToggle');
     const customTargetHint = document.getElementById('customTargetHint');
+    const customLineOptions = document.getElementById('customLineOptions');
+    const customLineRotateBtn = document.getElementById('customLineRotateBtn');
+    const customLineOrientationLabel = document.getElementById('customLineOrientationLabel');
+    const customLineStart = document.getElementById('customLineStart');
+    const customLineEnd = document.getElementById('customLineEnd');
+    const customLineStartValue = document.getElementById('customLineStartValue');
+    const customLineEndValue = document.getElementById('customLineEndValue');
     const imageInput = document.getElementById('imageInput');
     const imageFitMode = document.getElementById('imageFitMode');
     const imageZoom = document.getElementById('imageZoom');
@@ -1768,6 +1793,10 @@
       packet[8] = customExtension.lineFlags;
       packet[9] = customExtension.horizontalY;
       packet[10] = customExtension.verticalX;
+      packet[11] = customExtension.line1Start & 0x0f;
+      packet[12] = customExtension.line1End & 0x0f;
+      packet[13] = customExtension.line2Start & 0x0f;
+      packet[14] = customExtension.line2End & 0x0f;
       packet[19] = packet.slice(0, 19).reduce((sum, value) => (sum + value) & 0xff, 0);
       return packet;
     }
@@ -1789,6 +1818,21 @@
     function logicalFontSize(logicalPixels) {
       const base = selectedOrientation === 'portrait' ? 104 : 212;
       return `${((logicalPixels / base) * 100).toFixed(2)}cqw`;
+    }
+
+    function customLineStyle(target) {
+      const isLine2 = target === 'vline';
+      const vertical = customLineIsVertical(target);
+      const pos = isLine2 ? customExtension.verticalX : customExtension.horizontalY;
+      const start = isLine2 ? customExtension.line2Start : customExtension.line1Start;
+      const end = isLine2 ? customExtension.line2End : customExtension.line1End;
+      const min = Math.min(start, end);
+      const max = Math.max(start, end);
+      const span = Math.max(1, max - min);
+      if (vertical) {
+        return `left:${(pos / 15) * 100}%;top:${(min / 15) * 100}%;height:${(span / 15) * 100}%;`;
+      }
+      return `top:${(pos / 15) * 100}%;left:${(min / 15) * 100}%;width:${(span / 15) * 100}%;`;
     }
 
     function setCustomPanelVisible() {
@@ -1819,11 +1863,62 @@
 
     function selectedCustomPosition() {
       if (selectedCustomTarget === 'calendar') return customExtension.calendarPos;
-      if (selectedCustomTarget === 'hline') return (8 << 4) | customExtension.horizontalY;
-      if (selectedCustomTarget === 'vline') return (customExtension.verticalX << 4) | 8;
+      if (selectedCustomTarget === 'hline') {
+        return customLineIsVertical('hline') ? (customExtension.horizontalY << 4) | 8 : (8 << 4) | customExtension.horizontalY;
+      }
+      if (selectedCustomTarget === 'vline') {
+        return customLineIsVertical('vline') ? (customExtension.verticalX << 4) | 8 : (8 << 4) | customExtension.verticalX;
+      }
       if (selectedCustomTarget === 'metrics') return custom.metricsPos;
       if (selectedCustomTarget === 'date') return custom.datePos;
       return custom.timePos;
+    }
+
+    function customLineIsVertical(target) {
+      if (target === 'hline') return !!(customExtension.lineFlags & 0x04);
+      if (target === 'vline') return !!(customExtension.lineFlags & 0x08);
+      return false;
+    }
+
+    function setCustomLineVertical(target, vertical) {
+      const bit = target === 'hline' ? 0x04 : target === 'vline' ? 0x08 : 0x00;
+      if (!bit) return;
+      if (vertical) customExtension.lineFlags |= bit;
+      else customExtension.lineFlags &= (uint8Not(bit));
+    }
+
+    function uint8Not(value) {
+      return (~value) & 0xff;
+    }
+
+    function selectedLineRange() {
+      if (selectedCustomTarget === 'vline') {
+        return {
+          start: customExtension.line2Start,
+          end: customExtension.line2End
+        };
+      }
+      return {
+        start: customExtension.line1Start,
+        end: customExtension.line1End
+      };
+    }
+
+    function setSelectedLineRange(start, end) {
+      let safeStart = clampGrid(start);
+      let safeEnd = clampGrid(end);
+      if (safeStart > safeEnd) {
+        const swap = safeStart;
+        safeStart = safeEnd;
+        safeEnd = swap;
+      }
+      if (selectedCustomTarget === 'vline') {
+        customExtension.line2Start = safeStart;
+        customExtension.line2End = safeEnd;
+      } else {
+        customExtension.line1Start = safeStart;
+        customExtension.line1End = safeEnd;
+      }
     }
 
     function enableCustomTarget(target) {
@@ -1849,8 +1944,8 @@
       const safeY = clampGrid(y);
       enableCustomTarget(target);
       if (target === 'calendar') customExtension.calendarPos = (safeX << 4) | safeY;
-      else if (target === 'hline') customExtension.horizontalY = safeY;
-      else if (target === 'vline') customExtension.verticalX = safeX;
+      else if (target === 'hline') customExtension.horizontalY = customLineIsVertical(target) ? safeX : safeY;
+      else if (target === 'vline') customExtension.verticalX = customLineIsVertical(target) ? safeX : safeY;
       else if (target === 'metrics') custom.metricsPos = (safeX << 4) | safeY;
       else if (target === 'date') custom.datePos = (safeX << 4) | safeY;
       else custom.timePos = (safeX << 4) | safeY;
@@ -1862,8 +1957,8 @@
         date: 'Ngày / thứ',
         metrics: 'Nhiệt độ / pin',
         calendar: 'Lịch tháng',
-        hline: 'Đường ngang',
-        vline: 'Đường dọc'
+        hline: 'Đường 1',
+        vline: 'Đường 2'
       }[target] || 'Đối tượng';
     }
 
@@ -1874,10 +1969,21 @@
       customTargetSelect.value = selectedCustomTarget;
       customX.value = x;
       customY.value = y;
-      customXValue.textContent = selectedCustomTarget === 'hline' ? '-' : String(x);
-      customYValue.textContent = selectedCustomTarget === 'vline' ? '-' : String(y);
-      customX.disabled = selectedCustomTarget === 'hline';
-      customY.disabled = selectedCustomTarget === 'vline';
+      const isLine = selectedCustomTarget === 'hline' || selectedCustomTarget === 'vline';
+      const isVertical = customLineIsVertical(selectedCustomTarget);
+      customXValue.textContent = isLine && !isVertical ? '-' : String(x);
+      customYValue.textContent = isLine && isVertical ? '-' : String(y);
+      customX.disabled = isLine && !isVertical;
+      customY.disabled = isLine && isVertical;
+      customLineOptions.hidden = !isLine;
+      if (isLine) {
+        const range = selectedLineRange();
+        customLineStart.value = range.start;
+        customLineEnd.value = range.end;
+        customLineStartValue.textContent = String(range.start);
+        customLineEndValue.textContent = String(range.end);
+        customLineOrientationLabel.textContent = isVertical ? 'Doc' : 'Ngang';
+      }
       customGridToggle.checked = customGridVisible;
       customTargetHint.textContent = `${customTargetLabel(selectedCustomTarget)}: kéo trên preview, chỉnh X/Y hoặc dùng nút căn vị trí.`;
     }
@@ -1930,6 +2036,8 @@
         customExtension.widgets = 0x00;
         customExtension.lineFlags = 0x01;
         customExtension.horizontalY = 2;
+        customExtension.line1Start = 0;
+        customExtension.line1End = 15;
       } else if (name === 'clock') {
         custom.widgets = 0x39;
         custom.timePos = selectedOrientation === 'portrait' ? 0x46 : 0x43;
@@ -1939,6 +2047,8 @@
         customExtension.widgets = 0x00;
         customExtension.lineFlags = 0x01;
         customExtension.horizontalY = selectedOrientation === 'portrait' ? 13 : 2;
+        customExtension.line1Start = 0;
+        customExtension.line1End = 15;
       } else if (name === 'calendar') {
         setOrientation('landscape');
         custom.widgets = 0x3f;
@@ -1952,6 +2062,10 @@
         customExtension.lineFlags = 0x03;
         customExtension.horizontalY = 12;
         customExtension.verticalX = 8;
+        customExtension.line1Start = 0;
+        customExtension.line1End = 15;
+        customExtension.line2Start = 0;
+        customExtension.line2End = 15;
       } else {
         setOrientation('portrait');
         custom.widgets = 0x3f;
@@ -1964,6 +2078,8 @@
         customExtension.calendarStyle = 0x00;
         customExtension.lineFlags = 0x01;
         customExtension.horizontalY = 7;
+        customExtension.line1Start = 0;
+        customExtension.line1End = 15;
       }
 
       setCheckbox('#widgetToggles input[data-widget="time"]', !!(custom.widgets & 0x01));
@@ -1996,7 +2112,7 @@
 
     function updateCustomExtensionFromControls() {
       customExtension.widgets = document.querySelector('#extensionToggles input[data-extension="calendar"]').checked ? 0x01 : 0x00;
-      customExtension.lineFlags = 0;
+      customExtension.lineFlags &= 0x0c;
       if (document.querySelector('#extensionToggles input[data-extension="horizontal"]').checked) customExtension.lineFlags |= 0x01;
       if (document.querySelector('#extensionToggles input[data-extension="vertical"]').checked) customExtension.lineFlags |= 0x02;
       customExtension.calendarStyle = Number(calendarStyleSelect.value);
@@ -2707,8 +2823,8 @@
         if (custom.widgets & 0x04) widgets.push(`<div class="custom-preview-widget info${selectedClass('date')}" data-drag-widget="date" style="left:${(((custom.datePos >> 4) & 0x0f) / 15) * 100}%;top:${(((custom.datePos & 0x0f) / 15) * 100) + 8}%;--widget-font:${logicalFontSize(infoLogicalHeight)}">${weekday}</div>`);
         if (info) widgets.push(`<div class="custom-preview-widget info${selectedClass('metrics')}" data-drag-widget="metrics" style="${positionStyle(custom.metricsPos)}--widget-font:${logicalFontSize(infoLogicalHeight)}">${info}</div>`);
         if (customExtension.widgets & 0x01) widgets.push(`<div class="custom-preview-calendar${selectedClass('calendar')}" data-drag-widget="calendar" style="${positionStyle(customExtension.calendarPos)}"><div class="custom-calendar-head" ${customExtension.calendarStyle & 0x01 ? 'hidden' : ''}>${labels.map(label => `<span>${label}</span>`).join('')}</div><div class="custom-calendar-days">${cells}</div></div>`);
-        if (customExtension.lineFlags & 0x01) widgets.push(`<div class="custom-divider horizontal${selectedClass('hline')}" data-drag-widget="hline" style="top:${(customExtension.horizontalY / 15) * 100}%"></div>`);
-        if (customExtension.lineFlags & 0x02) widgets.push(`<div class="custom-divider vertical${selectedClass('vline')}" data-drag-widget="vline" style="left:${(customExtension.verticalX / 15) * 100}%"></div>`);
+        if (customExtension.lineFlags & 0x01) widgets.push(`<div class="custom-divider ${customLineIsVertical('hline') ? 'vertical' : 'horizontal'}${selectedClass('hline')}" data-drag-widget="hline" style="${customLineStyle('hline')}"></div>`);
+        if (customExtension.lineFlags & 0x02) widgets.push(`<div class="custom-divider ${customLineIsVertical('vline') ? 'vertical' : 'horizontal'}${selectedClass('vline')}" data-drag-widget="vline" style="${customLineStyle('vline')}"></div>`);
         preview.innerHTML = `${customGridVisible ? '<div class="custom-grid-overlay"></div>' : ''}${custom.widgets & 0x20 ? '<div class="calendar-preview" style="position:absolute;inset:0;border:1px solid #111"></div>' : ''}${widgets.join('')}`;
       } else if (selectedLayout === 11) {
         const calendar = calendarPreviewData(date);
@@ -3030,6 +3146,20 @@
       customGridVisible = customGridToggle.checked;
       updatePreview();
     });
+    customLineRotateBtn.addEventListener('click', () => {
+      if ((selectedCustomTarget !== 'hline') && (selectedCustomTarget !== 'vline')) return;
+      setCustomLineVertical(selectedCustomTarget, !customLineIsVertical(selectedCustomTarget));
+      syncCustomEditorControls();
+      updatePreview();
+    });
+    const updateSelectedLineRange = () => {
+      if ((selectedCustomTarget !== 'hline') && (selectedCustomTarget !== 'vline')) return;
+      setSelectedLineRange(customLineStart.value, customLineEnd.value);
+      syncCustomEditorControls();
+      updatePreview();
+    };
+    customLineStart.addEventListener('input', updateSelectedLineRange);
+    customLineEnd.addEventListener('input', updateSelectedLineRange);
     document.getElementById('customNudgePad').addEventListener('click', event => {
       const button = event.target.closest('button[data-nudge]');
       if (!button) return;
@@ -3125,9 +3255,9 @@
       if (dragWidget === 'calendar') {
         customExtension.calendarPos = (x << 4) | y;
       } else if (dragWidget === 'hline') {
-        customExtension.horizontalY = y;
+        customExtension.horizontalY = customLineIsVertical('hline') ? x : y;
       } else if (dragWidget === 'vline') {
-        customExtension.verticalX = x;
+        customExtension.verticalX = customLineIsVertical('vline') ? x : y;
       } else {
         custom[`${dragWidget}Pos`] = (x << 4) | y;
       }
