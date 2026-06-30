@@ -1,27 +1,27 @@
 {
-  "version": "0.3.11",
+  "version": "0.3.12",
   "protocol": "EPD FW protocol v0.3.2",
-  "released": "2026-06-30",
-  "notes": "Auto reset after successful safe OTA commit so the new slot boots without removing battery.",
+  "released": "2026-07-01",
+  "notes": "Start the default 00:00 clock counter immediately after boot, then replace it with real time on web sync.",
   "image": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59332,
-    "sha256": "49DA884DEB842284A45ABB3028AA64F57B0CE6CB215426DBA99EFA4D09E0E407"
+    "size": 59336,
+    "sha256": "0EECC489B7CDED91FA481C0B841BA230D2DF54B65D92C1717229BFE6C919497A"
   },
   "image_type1": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59332,
-    "sha256": "49DA884DEB842284A45ABB3028AA64F57B0CE6CB215426DBA99EFA4D09E0E407"
+    "size": 59336,
+    "sha256": "0EECC489B7CDED91FA481C0B841BA230D2DF54B65D92C1717229BFE6C919497A"
   },
   "image_type2": {
     "url": "epd_tag_slot_b_type2.img",
     "name": "epd_tag_slot_b_type2.img",
     "board_type": 2,
-    "size": 59344,
-    "sha256": "F59462EFFFEE82A84679448B0077AA7E56D3AA8A6BD33FFFC8F68C58BD4A1E22"
+    "size": 59348,
+    "sha256": "B944B50F9FECB94816072F921E9A2567A632BCA58DE9D51E3C88C114C03F69D2"
   }
 }
