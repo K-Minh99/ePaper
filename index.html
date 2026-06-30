@@ -1323,7 +1323,7 @@
     const FW_PROTOCOL_VERSION = 'EPD FW protocol v0.3.2';
     const UPDATE_MANIFEST_URL = 'https://k-minh99.github.io/ePaper/firmware/manifest.json';
     const SLOT_IMAGE_MAX_BYTES = 0x12000;
-    const DEVICE_NAME_PREFIX = 'DLG-PRPH';
+    const DEVICE_NAME_PREFIXES = ['DLG-PRPH-T1', 'DLG-PRPH-T2'];
     const SYNC_LEAD_SECONDS = 2;
 
     let device = null;
@@ -2877,7 +2877,7 @@
       }
 
       device = await navigator.bluetooth.requestDevice({
-        filters: [{ namePrefix: DEVICE_NAME_PREFIX }],
+        filters: DEVICE_NAME_PREFIXES.map((namePrefix) => ({ namePrefix })),
         optionalServices: [SERVICE_UUID]
       });
       connectedBoardType = detectBoardTypeFromName(device.name);
