@@ -1,27 +1,27 @@
 {
-  "version": "0.3.10",
+  "version": "0.3.11",
   "protocol": "EPD FW protocol v0.3.2",
-  "released": "2026-06-29",
-  "notes": "Add board type marker and separate OTA images for type 1/type 2 hardware.",
+  "released": "2026-06-30",
+  "notes": "Restore degree symbol rendering and publish separate OTA images for type 1/type 2 hardware.",
   "image": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59140,
-    "sha256": "ED97D20A2B6BBCB821B482F7A53BD3941788300AEA4BCD07242E9F97507F9F11"
+    "size": 59168,
+    "sha256": "652A94421E0EF3CCFA4CC459E5E1977FE3B629422843742178B593861C7C269C"
   },
   "image_type1": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59140,
-    "sha256": "ED97D20A2B6BBCB821B482F7A53BD3941788300AEA4BCD07242E9F97507F9F11"
+    "size": 59168,
+    "sha256": "652A94421E0EF3CCFA4CC459E5E1977FE3B629422843742178B593861C7C269C"
   },
   "image_type2": {
     "url": "epd_tag_slot_b_type2.img",
     "name": "epd_tag_slot_b_type2.img",
     "board_type": 2,
-    "size": 59144,
-    "sha256": "21877EF983851850285A81481595F045E194E67D852D66975DB11BD7E4028581"
+    "size": 59180,
+    "sha256": "80F721CCCDF04E9710D06CFFC0C62B62B962F92C27BAD5A8DA1F9B4824BAB833"
   }
 }
