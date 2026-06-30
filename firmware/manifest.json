@@ -2,26 +2,26 @@
   "version": "0.3.11",
   "protocol": "EPD FW protocol v0.3.2",
   "released": "2026-06-30",
-  "notes": "Restore degree symbol rendering and publish separate OTA images for type 1/type 2 hardware.",
+  "notes": "Auto reset after successful safe OTA commit so the new slot boots without removing battery.",
   "image": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59168,
-    "sha256": "652A94421E0EF3CCFA4CC459E5E1977FE3B629422843742178B593861C7C269C"
+    "size": 59332,
+    "sha256": "49DA884DEB842284A45ABB3028AA64F57B0CE6CB215426DBA99EFA4D09E0E407"
   },
   "image_type1": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59168,
-    "sha256": "652A94421E0EF3CCFA4CC459E5E1977FE3B629422843742178B593861C7C269C"
+    "size": 59332,
+    "sha256": "49DA884DEB842284A45ABB3028AA64F57B0CE6CB215426DBA99EFA4D09E0E407"
   },
   "image_type2": {
     "url": "epd_tag_slot_b_type2.img",
     "name": "epd_tag_slot_b_type2.img",
     "board_type": 2,
-    "size": 59180,
-    "sha256": "80F721CCCDF04E9710D06CFFC0C62B62B962F92C27BAD5A8DA1F9B4824BAB833"
+    "size": 59344,
+    "sha256": "F59462EFFFEE82A84679448B0077AA7E56D3AA8A6BD33FFFC8F68C58BD4A1E22"
   }
 }
