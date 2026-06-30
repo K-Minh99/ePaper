@@ -1319,7 +1319,7 @@
     const SERVICE_UUID = '18424398-7cbc-11e9-8f9e-2a86e4085a59';
     const CONTROL_UUID = '2d86686a-53dc-25b3-0c4a-f0e10c8dee20';
     const FLASH_DUMP_UUID = '2f86686a-53dc-25b3-0c4a-f0e10c8dee20';
-    const WEB_VERSION = '0.3.10';
+    const WEB_VERSION = '0.3.12';
     const FW_PROTOCOL_VERSION = 'EPD FW protocol v0.3.2';
     const UPDATE_MANIFEST_URL = 'https://k-minh99.github.io/ePaper/firmware/manifest.json';
     const SLOT_IMAGE_MAX_BYTES = 0x12000;
@@ -1506,8 +1506,18 @@
     }
 
     function getFirmwareImageInfo(manifest) {
-      const typeKey = `image_type${connectedBoardType || 1}`;
-      return manifest[typeKey] || manifest.image || {};
+      if (connectedBoardType !== 1 && connectedBoardType !== 2) {
+        throw new Error('Chưa xác định được loại board T1/T2. Hãy ngắt kết nối và scan lại đúng thiết bị.');
+      }
+      const typeKey = `image_type${connectedBoardType}`;
+      const imageInfo = manifest[typeKey];
+      if (!imageInfo) {
+        throw new Error(`Manifest không có firmware cho board Type ${connectedBoardType}.`);
+      }
+      if (imageInfo.board_type && Number(imageInfo.board_type) !== connectedBoardType) {
+        throw new Error(`Firmware trong manifest không khớp board Type ${connectedBoardType}.`);
+      }
+      return imageInfo;
     }
 
     async function sha256Hex(data) {
@@ -1592,7 +1602,7 @@
 
       await writeControl(new Uint8Array([0x45, 0x50, 0x44, 0x38, 0x03, 0x00, 0x00, 0x00, 0x00]));
       setFlashWriteProgress(100);
-      log('Safe OTA commit complete. Power-cycle/reset the board, then scan BLE. If OTA was interrupted before this line, the old firmware remains active.');
+      log('Safe OTA commit complete. Device will disconnect and reset automatically. If OTA was interrupted before this line, the old firmware remains active.');
     }
 
     async function programExternalFlash() {

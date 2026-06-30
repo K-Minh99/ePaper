@@ -1319,7 +1319,7 @@
     const SERVICE_UUID = '18424398-7cbc-11e9-8f9e-2a86e4085a59';
     const CONTROL_UUID = '2d86686a-53dc-25b3-0c4a-f0e10c8dee20';
     const FLASH_DUMP_UUID = '2f86686a-53dc-25b3-0c4a-f0e10c8dee20';
-    const WEB_VERSION = '0.3.9';
+    const WEB_VERSION = '0.3.12';
     const FW_PROTOCOL_VERSION = 'EPD FW protocol v0.3.2';
     const UPDATE_MANIFEST_URL = 'https://k-minh99.github.io/ePaper/firmware/manifest.json';
     const SLOT_IMAGE_MAX_BYTES = 0x12000;
@@ -1333,6 +1333,7 @@
     let safeOtaSupported = false;
     let firmwareCompatible = false;
     let latestFirmwareManifest = null;
+    let connectedBoardType = 0;
     let manualDisconnect = false;
     let autoReconnect = true;
     let reconnecting = false;
@@ -1497,6 +1498,28 @@
       return new URL(path, UPDATE_MANIFEST_URL).toString();
     }
 
+    function detectBoardTypeFromName(name) {
+      const normalized = String(name || '').toUpperCase();
+      if (normalized.includes('-T2')) return 2;
+      if (normalized.includes('-T1')) return 1;
+      return 1;
+    }
+
+    function getFirmwareImageInfo(manifest) {
+      if (connectedBoardType !== 1 && connectedBoardType !== 2) {
+        throw new Error('Chưa xác định được loại board T1/T2. Hãy ngắt kết nối và scan lại đúng thiết bị.');
+      }
+      const typeKey = `image_type${connectedBoardType}`;
+      const imageInfo = manifest[typeKey];
+      if (!imageInfo) {
+        throw new Error(`Manifest không có firmware cho board Type ${connectedBoardType}.`);
+      }
+      if (imageInfo.board_type && Number(imageInfo.board_type) !== connectedBoardType) {
+        throw new Error(`Firmware trong manifest không khớp board Type ${connectedBoardType}.`);
+      }
+      return imageInfo;
+    }
+
     async function sha256Hex(data) {
       const hash = await crypto.subtle.digest('SHA-256', data);
       return [...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
@@ -1521,12 +1544,13 @@
 
     async function fetchLatestFirmwareImage() {
       const manifest = latestFirmwareManifest || await fetchFirmwareManifest();
-      const imageInfo = manifest.image || {};
+      const imageInfo = getFirmwareImageInfo(manifest);
       const imagePath = imageInfo.url || manifest.imageUrl;
       if (!imagePath) {
         throw new Error('Manifest không có đường dẫn firmware image.');
       }
       const imageUrl = resolveManifestUrl(imagePath);
+      log(`OTA image selected for board type ${connectedBoardType || 1}: ${imagePath}`);
       updateFirmwareStatus(`Đang tải firmware v${manifest.version || ''} từ GitHub...`);
       const response = await fetch(`${imageUrl}?t=${Date.now()}`, { cache: 'no-store' });
       if (!response.ok) {
@@ -1578,7 +1602,7 @@
 
       await writeControl(new Uint8Array([0x45, 0x50, 0x44, 0x38, 0x03, 0x00, 0x00, 0x00, 0x00]));
       setFlashWriteProgress(100);
-      log('Safe OTA commit complete. Power-cycle/reset the board, then scan BLE. If OTA was interrupted before this line, the old firmware remains active.');
+      log('Safe OTA commit complete. Device will disconnect and reset automatically. If OTA was interrupted before this line, the old firmware remains active.');
     }
 
     async function programExternalFlash() {
@@ -2866,6 +2890,7 @@
         filters: [{ namePrefix: DEVICE_NAME_PREFIX }],
         optionalServices: [SERVICE_UUID]
       });
+      connectedBoardType = detectBoardTypeFromName(device.name);
       manualDisconnect = false;
       autoReconnect = true;
       device.addEventListener('gattserverdisconnected', () => {
@@ -2915,8 +2940,11 @@
       }
       setStatus('on', device.name || 'Connected');
       log(`Connected: ${device.name || device.id}`);
+      connectedBoardType = detectBoardTypeFromName(device.name);
       fwVersionLabel.textContent = firmwareCompatible ? FW_PROTOCOL_VERSION : 'FW cũ / legacy';
       log(`Expected firmware protocol: ${FW_PROTOCOL_VERSION}`);
+      fwVersionLabel.textContent = firmwareCompatible ? `${FW_PROTOCOL_VERSION} / Type ${connectedBoardType}` : fwVersionLabel.textContent;
+      log(`Detected board type: ${connectedBoardType}`);
       log(flashDumpCharacteristic ? 'Legacy flash-writer firmware detected. Safe OTA is blocked on this page.' : 'Safe OTA characteristic set detected.');
       if (!firmwareCompatible) {
         showFirmwareUpdateRequired('các layout và widget mới');
