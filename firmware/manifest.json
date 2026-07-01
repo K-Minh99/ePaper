@@ -1,27 +1,27 @@
 {
-  "version": "0.3.14",
+  "version": "0.3.15",
   "protocol": "EPD FW protocol v0.3.2",
   "released": "2026-07-01",
-  "notes": "Restart the minute timer after every display refresh and expose timer debug counters for validation.",
+  "notes": "Use a clean full refresh for unsynchronized default clock ticks; switch back to partial after web sync.",
   "image": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59404,
-    "sha256": "4C100E5479B1B99CDF553B0AB6127D1037F64B5FD714113F7D80FF2732AA0189"
+    "size": 59424,
+    "sha256": "C2DAD4F4C06E1FDD5D4BCFA38212DEE4140DAC4D8EB537F1CDC31C7B463B5E3B"
   },
   "image_type1": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59404,
-    "sha256": "4C100E5479B1B99CDF553B0AB6127D1037F64B5FD714113F7D80FF2732AA0189"
+    "size": 59424,
+    "sha256": "C2DAD4F4C06E1FDD5D4BCFA38212DEE4140DAC4D8EB537F1CDC31C7B463B5E3B"
   },
   "image_type2": {
     "url": "epd_tag_slot_b_type2.img",
     "name": "epd_tag_slot_b_type2.img",
     "board_type": 2,
-    "size": 59416,
-    "sha256": "4520906DC96CE9719D1CCD8820625819F1FCE83EC74CEDA8CB5148064E11D6A8"
+    "size": 59436,
+    "sha256": "060B973C27E1291C325D45A2CF20F99A91F63B617C6F8F836C4E4E3C4BD14FDC"
   }
 }
