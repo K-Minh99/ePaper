@@ -1,27 +1,27 @@
 {
-  "version": "0.3.13",
+  "version": "0.3.14",
   "protocol": "EPD FW protocol v0.3.2",
   "released": "2026-07-01",
-  "notes": "Force the default boot clock to start at 00:00 and restart the minute timer after the first boot refresh.",
+  "notes": "Restart the minute timer after every display refresh and expose timer debug counters for validation.",
   "image": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59344,
-    "sha256": "2DBD60C8FE207FE4020D06101A262CB7025004CED19158BBC75F16838B72F087"
+    "size": 59404,
+    "sha256": "4C100E5479B1B99CDF553B0AB6127D1037F64B5FD714113F7D80FF2732AA0189"
   },
   "image_type1": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59344,
-    "sha256": "2DBD60C8FE207FE4020D06101A262CB7025004CED19158BBC75F16838B72F087"
+    "size": 59404,
+    "sha256": "4C100E5479B1B99CDF553B0AB6127D1037F64B5FD714113F7D80FF2732AA0189"
   },
   "image_type2": {
     "url": "epd_tag_slot_b_type2.img",
     "name": "epd_tag_slot_b_type2.img",
     "board_type": 2,
-    "size": 59356,
-    "sha256": "5A17AC7E4116E884BC525D3E2D4E57336B126748768C10D7AEA3B9C77C188305"
+    "size": 59416,
+    "sha256": "4520906DC96CE9719D1CCD8820625819F1FCE83EC74CEDA8CB5148064E11D6A8"
   }
 }
