@@ -1,27 +1,27 @@
 {
-  "version": "0.3.17",
+  "version": "0.3.18",
   "protocol": "EPD FW protocol v0.3.2",
   "released": "2026-07-01",
-  "notes": "Use partial minute refresh on the default boot layout before web time sync.",
+  "notes": "Reset retained partial-refresh state on boot so type 1 and type 2 both update the default clock.",
   "image": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59548,
-    "sha256": "2B4D8C60951252783649EA78C73A9FFDF261F0F73AB1387A826A0F4AD30E9241"
+    "size": 59556,
+    "sha256": "C3D45FD3CB2A4C824B74AE8962CA19A658CC48ABD039E1BED062D4FDBCEAAAEA"
   },
   "image_type1": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59548,
-    "sha256": "2B4D8C60951252783649EA78C73A9FFDF261F0F73AB1387A826A0F4AD30E9241"
+    "size": 59556,
+    "sha256": "C3D45FD3CB2A4C824B74AE8962CA19A658CC48ABD039E1BED062D4FDBCEAAAEA"
   },
   "image_type2": {
     "url": "epd_tag_slot_b_type2.img",
     "name": "epd_tag_slot_b_type2.img",
     "board_type": 2,
-    "size": 59560,
-    "sha256": "D9CF74416EA4409DE62A1C4404274C7A518BFC078CDD4348124C8E8E290E4C1A"
+    "size": 59568,
+    "sha256": "CA2300DE8A13ACCDD948B5B976A796ABC584D13CD1F84A8C37D191D619F3B9F3"
   }
 }
