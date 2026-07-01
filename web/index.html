@@ -838,6 +838,10 @@
       font-weight: 650;
     }
 
+    .upload-progress.ota-progress {
+      grid-template-columns: 1fr 48px 96px;
+    }
+
     progress { width: 100%; height: 10px; }
 
     .screen.image-mode,
@@ -1260,7 +1264,7 @@
             <button id="previewImageBtn">Xem thử ảnh</button>
             <button id="uploadImageBtn" class="primary">Gửi lên màn</button>
           </div>
-          <div class="upload-progress">
+          <div class="upload-progress ota-progress">
             <progress id="imageProgress" max="100" value="0"></progress>
             <span id="imageProgressValue">0%</span>
           </div>
@@ -1299,6 +1303,7 @@
           <div class="upload-progress">
             <progress id="flashWriteProgress" max="100" value="0"></progress>
             <span id="flashWriteProgressValue">0%</span>
+            <span id="flashWriteEta">--</span>
           </div>
         </div>
       </div>
@@ -1319,7 +1324,7 @@
     const SERVICE_UUID = '18424398-7cbc-11e9-8f9e-2a86e4085a59';
     const CONTROL_UUID = '2d86686a-53dc-25b3-0c4a-f0e10c8dee20';
     const FLASH_DUMP_UUID = '2f86686a-53dc-25b3-0c4a-f0e10c8dee20';
-    const WEB_VERSION = '0.3.12';
+    const WEB_VERSION = '0.3.13';
     const FW_PROTOCOL_VERSION = 'EPD FW protocol v0.3.2';
     const UPDATE_MANIFEST_URL = 'https://k-minh99.github.io/ePaper/firmware/manifest.json';
     const SLOT_IMAGE_MAX_BYTES = 0x12000;
@@ -1330,6 +1335,9 @@
     let characteristic = null;
     let flashDumpCharacteristic = null;
     let flashWriteActive = false;
+    let flashWriteStartedAt = 0;
+    let flashWriteLastProgress = 0;
+    let safeOtaCommitSent = false;
     let safeOtaSupported = false;
     let firmwareCompatible = false;
     let latestFirmwareManifest = null;
@@ -1406,6 +1414,7 @@
     const flashWriteBtn = document.getElementById('flashWriteBtn');
     const flashWriteProgress = document.getElementById('flashWriteProgress');
     const flashWriteProgressValue = document.getElementById('flashWriteProgressValue');
+    const flashWriteEta = document.getElementById('flashWriteEta');
     const fwUpdateStatus = document.getElementById('fwUpdateStatus');
     const webVersionLabel = document.getElementById('webVersionLabel');
     const fwVersionLabel = document.getElementById('fwVersionLabel');
@@ -1436,10 +1445,45 @@
       return true;
     }
 
-    function setFlashWriteProgress(value) {
+    function formatDuration(ms) {
+      if (!Number.isFinite(ms) || ms <= 0) return '--';
+      const seconds = Math.max(1, Math.ceil(ms / 1000));
+      const minutes = Math.floor(seconds / 60);
+      const rest = seconds % 60;
+      if (minutes <= 0) return `${rest}s`;
+      return `${minutes}m ${String(rest).padStart(2, '0')}s`;
+    }
+
+    function updateConnectedFirmwareLabel() {
+      if (!device || !device.gatt || !device.gatt.connected) {
+        fwVersionLabel.textContent = 'chưa kết nối';
+        return;
+      }
+      if (!firmwareCompatible) {
+        fwVersionLabel.textContent = 'FW cũ / legacy';
+        return;
+      }
+      const version = latestFirmwareManifest && latestFirmwareManifest.version ? `v${latestFirmwareManifest.version}` : 'version unknown';
+      fwVersionLabel.textContent = `${version} / Type ${connectedBoardType} / ${FW_PROTOCOL_VERSION}`;
+    }
+
+    function setFlashWriteProgress(value, statusText = '') {
       const safeValue = Math.max(0, Math.min(100, value));
+      flashWriteLastProgress = safeValue;
       flashWriteProgress.value = safeValue;
       flashWriteProgressValue.textContent = `${safeValue}%`;
+      if (!flashWriteEta) return;
+      if (statusText) {
+        flashWriteEta.textContent = statusText;
+      } else if (!flashWriteStartedAt || safeValue <= 0) {
+        flashWriteEta.textContent = '--';
+      } else if (safeValue >= 100) {
+        flashWriteEta.textContent = 'done';
+      } else {
+        const elapsed = Date.now() - flashWriteStartedAt;
+        const etaMs = (elapsed * (100 - safeValue)) / safeValue;
+        flashWriteEta.textContent = `ETA ${formatDuration(etaMs)}`;
+      }
     }
 
     async function writeControl(packet) {
@@ -1539,6 +1583,7 @@
       const protocolMatches = protocol === FW_PROTOCOL_VERSION;
       updateFirmwareStatus(`${isNewerThanWeb ? 'Có' : 'Đang dùng'} bản mới nhất trên GitHub: v${latest}.${protocolMatches ? '' : ' Cần web/FW protocol phù hợp.'}${notes}`);
       log(`GitHub firmware manifest: v${latest}, protocol ${protocol}`);
+      updateConnectedFirmwareLabel();
       return latestFirmwareManifest;
     }
 
@@ -1576,6 +1621,7 @@
     async function programOtaSlotImage(image) {
       const sectorCount = Math.ceil(image.length / 4096);
       log(`Safe OTA started: ${image.length} bytes, ${sectorCount} sectors. The old firmware remains valid until commit.`);
+      safeOtaCommitSent = false;
 
       await writeControl(new Uint8Array([0x45, 0x50, 0x44, 0x38, 0x00, image.length & 0xff, (image.length >> 8) & 0xff, (image.length >> 16) & 0xff, 0x00]));
       for (let sector = 0; sector < sectorCount; sector += 1) {
@@ -1600,8 +1646,9 @@
         }
       }
 
+      safeOtaCommitSent = true;
       await writeControl(new Uint8Array([0x45, 0x50, 0x44, 0x38, 0x03, 0x00, 0x00, 0x00, 0x00]));
-      setFlashWriteProgress(100);
+      setFlashWriteProgress(100, 'done');
       log('Safe OTA commit complete. Device will disconnect and reset automatically. If OTA was interrupted before this line, the old firmware remains active.');
     }
 
@@ -1625,11 +1672,21 @@
       flashWriteActive = true;
       autoReconnect = false;
       flashWriteBtn.disabled = true;
+      flashWriteStartedAt = Date.now();
+      safeOtaCommitSent = false;
       setFlashWriteProgress(0);
 
       try {
         await programOtaSlotImage(image);
-        updateFirmwareStatus('Cập nhật OTA đã commit xong. Reset thiết bị rồi kết nối lại.');
+        updateFirmwareStatus('Cập nhật OTA đã commit xong. Thiết bị sẽ reset và tự kết nối lại.');
+      } catch (error) {
+        if (safeOtaCommitSent || flashWriteLastProgress >= 95) {
+          setFlashWriteProgress(100, 'done');
+          updateFirmwareStatus('Cập nhật OTA đã commit xong. Thiết bị đang reset và tự kết nối lại.');
+          log('OTA commit likely completed; BLE disconnected while the device reset.');
+          return;
+        }
+        throw error;
       } finally {
         flashWriteActive = false;
         autoReconnect = true;
@@ -2894,13 +2951,21 @@
       manualDisconnect = false;
       autoReconnect = true;
       device.addEventListener('gattserverdisconnected', () => {
+        const otaWasCommitting = flashWriteActive && (safeOtaCommitSent || flashWriteLastProgress >= 95);
         characteristic = null;
         flashDumpCharacteristic = null;
         safeOtaSupported = false;
         firmwareCompatible = false;
-        fwVersionLabel.textContent = 'chưa kết nối';
+        updateConnectedFirmwareLabel();
         setStatus('', 'Disconnected');
         log('Disconnected');
+        if (otaWasCommitting) {
+          setFlashWriteProgress(100, 'done');
+          flashWriteActive = false;
+          autoReconnect = true;
+          flashWriteBtn.disabled = false;
+          updateFirmwareStatus('Cập nhật OTA đã commit xong. Thiết bị đang reset và tự kết nối lại.');
+        }
         if (autoReconnect && !manualDisconnect && !flashWriteActive) {
           scheduleReconnect();
         }
@@ -2941,9 +3006,8 @@
       setStatus('on', device.name || 'Connected');
       log(`Connected: ${device.name || device.id}`);
       connectedBoardType = detectBoardTypeFromName(device.name);
-      fwVersionLabel.textContent = firmwareCompatible ? FW_PROTOCOL_VERSION : 'FW cũ / legacy';
       log(`Expected firmware protocol: ${FW_PROTOCOL_VERSION}`);
-      fwVersionLabel.textContent = firmwareCompatible ? `${FW_PROTOCOL_VERSION} / Type ${connectedBoardType}` : fwVersionLabel.textContent;
+      updateConnectedFirmwareLabel();
       log(`Detected board type: ${connectedBoardType}`);
       log(flashDumpCharacteristic ? 'Legacy flash-writer firmware detected. Safe OTA is blocked on this page.' : 'Safe OTA characteristic set detected.');
       if (!firmwareCompatible) {
