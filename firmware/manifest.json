@@ -1,27 +1,27 @@
 {
-  "version": "0.3.16",
+  "version": "0.3.17",
   "protocol": "EPD FW protocol v0.3.2",
   "released": "2026-07-01",
-  "notes": "Reset immediately after a successful safe OTA commit so the new firmware starts without power cycling.",
+  "notes": "Use partial minute refresh on the default boot layout before web time sync.",
   "image": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59564,
-    "sha256": "D7E04F3441F6C12D66D99B9EFAE7E0C655D907C5201BC95A4291929B3D3AFE36"
+    "size": 59548,
+    "sha256": "2B4D8C60951252783649EA78C73A9FFDF261F0F73AB1387A826A0F4AD30E9241"
   },
   "image_type1": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59564,
-    "sha256": "D7E04F3441F6C12D66D99B9EFAE7E0C655D907C5201BC95A4291929B3D3AFE36"
+    "size": 59548,
+    "sha256": "2B4D8C60951252783649EA78C73A9FFDF261F0F73AB1387A826A0F4AD30E9241"
   },
   "image_type2": {
     "url": "epd_tag_slot_b_type2.img",
     "name": "epd_tag_slot_b_type2.img",
     "board_type": 2,
-    "size": 59576,
-    "sha256": "56B23848A43ED952D5640E5E79C5A0B2EF9C56DAF7F34007B577AA30386299C8"
+    "size": 59560,
+    "sha256": "D9CF74416EA4409DE62A1C4404274C7A518BFC078CDD4348124C8E8E290E4C1A"
   }
 }
