@@ -1,8 +1,8 @@
 {
-  "version": "0.3.19",
+  "version": "0.3.20",
   "protocol": "EPD FW protocol v0.3.2",
   "released": "2026-07-01",
-  "notes": "Type 2 default boot clock now falls back to a full minute refresh before web sync so the minute change is visible.",
+  "notes": "Type 1 and Type 2 now share the same runtime flow; only board type, BLE name and display GPIO mapping differ.",
   "image": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
@@ -21,7 +21,7 @@
     "url": "epd_tag_slot_b_type2.img",
     "name": "epd_tag_slot_b_type2.img",
     "board_type": 2,
-    "size": 59580,
-    "sha256": "BF772D39A86F6D4597DF9EE05FC46A207A6C7E3A6C98326507E9156770C93B6A"
+    "size": 59568,
+    "sha256": "CA2300DE8A13ACCDD948B5B976A796ABC584D13CD1F84A8C37D191D619F3B9F3"
   }
 }
