@@ -1,21 +1,21 @@
 {
-  "version": "0.3.20",
+  "version": "0.3.21",
   "protocol": "EPD FW protocol v0.3.2",
   "released": "2026-07-01",
-  "notes": "Type 1 and Type 2 now share the same runtime flow; only board type, BLE name and display GPIO mapping differ.",
+  "notes": "Type 1 timer no longer restarts after display refresh, preventing refresh time from accumulating as clock drift.",
   "image": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59556,
-    "sha256": "C3D45FD3CB2A4C824B74AE8962CA19A658CC48ABD039E1BED062D4FDBCEAAAEA"
+    "size": 59468,
+    "sha256": "79384D89FEA33E97B4281C55AA1974BD6DCA850575691F3651B44853A3B9EF01"
   },
   "image_type1": {
     "url": "epd_tag_slot_b_type1.img",
     "name": "epd_tag_slot_b_type1.img",
     "board_type": 1,
-    "size": 59556,
-    "sha256": "C3D45FD3CB2A4C824B74AE8962CA19A658CC48ABD039E1BED062D4FDBCEAAAEA"
+    "size": 59468,
+    "sha256": "79384D89FEA33E97B4281C55AA1974BD6DCA850575691F3651B44853A3B9EF01"
   },
   "image_type2": {
     "url": "epd_tag_slot_b_type2.img",
